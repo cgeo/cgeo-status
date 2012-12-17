@@ -1,0 +1,23 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+
+# Home page
+GET     /                           controllers.Application.index
+
+# Status page
+GET	/api/status.json            controllers.API.status(version_code: Int, version_name: String)
+
+# Update message
+POST    /api/update/message         controllers.API.updateMessage()
+
+# Update release information
+POST	/api/update/:kind	    controllers.API.update(kind: String)
+
+# Delete message
+DELETE  /api/update/message         controllers.API.deleteMessage(key: String)
+
+# Delete release information
+DELETE  /api/update/:kind           controllers.API.delete(kind: String, key: String)
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)

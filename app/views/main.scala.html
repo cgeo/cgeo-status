@@ -1,0 +1,98 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>@title</title>
+	<link rel="shortcut icon" href="http://www.cgeo.org/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" href="http://www.cgeo.org/content/css/styles.css" type="text/css" media="all" />
+	<link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+    </head>
+    <body>
+
+  <div id="container">
+    <div id="page">
+      <div id="header">
+      	<div id="logo">
+          <a href="http://www.cgeo.org" target="_self"><img src="http://www.cgeo.org/content/images/logo.png" alt="c:geo" title="c:geo" border="0" /></a>
+          <div id="social">
+            <span>Follow us:</span>
+            <a id="f" href="http://www.facebook.com/android.geocaching" target="_blank" title="Facebook"></a>
+            <a id="t" href="http://twitter.com/android_gc" target="_blank" title="Twitter"></a>
+            <div id="fblike">
+              <div id="fb-root"></div><script src="http://connect.facebook.net/en_US/all.js#appId=143097602435960&amp;xfbml=1"></script><fb:like href="http://www.facebook.com/android.geocaching" send="false" layout="button_count" width="450" show_faces="false" colorscheme="dark" font="trebuchet ms"></fb:like>
+            </div>
+          </div>
+        </div>
+        <div id="description">
+          <div id="title">
+            <span>c:geo</span>
+            - Android GeoCaching
+          </div>
+          <div id="text">
+            <strong>c:geo</strong> is simple yet powerful unofficial geocaching client for Android devices. In contrast with other similar applications, <strong>c:geo</strong> doesn't require web browser nor exports. You can just go geocaching with your phone and without any home preparation or worries. Of course, you can go without paying - it's free.
+          </div>
+          <div id="sub">
+            Try it! Use the barcode, search for "cgeo" on Android Market or download and install .apk file manually.
+          </div>
+          <div id="actions">
+            <div id="button"><a href="http://market.android.com/details?id=cgeo.geocaching" target="_blank" title="download c:geo ..."></a></div>
+            <div id="qr"></div>
+          </div>
+        </div>
+        <div id="menu">
+          <ul>
+            <li><a href="http://send2.cgeo.org" target="_self">Send 2 c:geo<span>Easy transfer caches to your device ...</span></a></li>
+            <li><a href="http://faq.cgeo.org" target="_self">F.A.Q.<span>Frequently Asked Questions by Users.</span></a></li>
+            <li><a href="http://github.com/cgeo/c-geo-opensource/issues" target="_blank">Report Bug / Issue<span>You found one of them? Please let us know!</span></a></li>
+            <li><a href="http://www.cgeo.org/contact.html" target="_self">Contact<span>For questions, wishes and support.</span></a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="clear"></div>
+      <div id="content">
+        @content
+      </div>
+      <div class="clear"></div>
+    </div>
+    <div id="footer">
+      <div id="boxes">
+        <div id="get">
+          <span>Get c:geo:</span>
+          <ul>
+            <li><a href="http://market.android.com/details?id=cgeo.geocaching" target="_blank">Android Market</a></li>
+            <li><a href="http://www.cgeo.org/cgeo.apk" target="_blank">APK Download</a></li>
+            <li><a href="http://github.com/cgeo/c-geo-opensource" target="_blank">Source</a></li>
+            <li><a href="http://www.cgeo.org/nightly.html" target="_self">Nightly-Builds</a></li>
+          </ul>
+        </div>
+        <div id="support">
+          <span>Support us:</span>
+          <a id="d" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=FMLNN8GXZKJEE" target="_blank" title="Donate (PayPal)"></a>
+        </div>
+        <div id="links">
+          <span>Shortcuts:</span>
+          <ul>
+            <li><a href="http://www.facebook.com/android.geocaching" target="_blank">Facebook</a></li>
+            <li><a href="http://twitter.com/android_gc" target="_blank">Twitter</a></li>
+            <li><a href="http://www.cgeo.org/contact.html" target="_self">Contact</a></li>
+            <li><a href="http://www.cgeo.org/media.html" target="_self">Media</a></li>
+          </ul>
+        </div>
+        <div id="partner">
+          <span>Partner App:</span>
+          <div id="app">
+            <a href="http://gcc.eisbehr.de" target="_blank" title="GCC - GeoCache Calculator"><img src="http://www.cgeo.org/content/images/gcc.png" alt="GCC - GeoCache Calculator" border="0" /> GCC</a>
+          </div>
+        </div>
+      </div>
+      <div id="copyright">
+      	<div id="copyright_text">
+          Copyright &copy; 2012 - c:geo (<a href="http://www.cgeo.org" target="_blank">http://www.cgeo.org</a>) | Page by <a href="http://www.eisbehr.de" target="_blank">Eisbehr.de</a>
+        </div>
+      </div>
+    </div>
+  </div>
+    </body>
+</html>
