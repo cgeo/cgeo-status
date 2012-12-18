@@ -21,14 +21,14 @@ class Counter(sampleSize: Int) {
   def users: Option[Long] =
     times() match {
       case t if t.size == sampleSize =>
-	val interClients = 1800000 * (sampleSize - 1) / (t.last - t.head).max(1)
-	val withDecay = 1800000 * sampleSize / (System.currentTimeMillis - t.head).max(1)
-	interClients.min(withDecay) match {
-	  case 0 => None
-	  case v => Some(v)
-	}
+        val interClients = 1800000 * (sampleSize - 1) / (t.last - t.head).max(1)
+        val withDecay = 1800000 * sampleSize / (System.currentTimeMillis - t.head).max(1)
+        interClients.min(withDecay) match {
+          case 0 => None
+          case v => Some(v)
+        }
       case _ =>
-	None
+        None
     }
 
 }

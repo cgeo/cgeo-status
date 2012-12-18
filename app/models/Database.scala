@@ -13,7 +13,7 @@ object Database {
     val m = """^mongodb://(([^/:@]+):([^:/@]+)@)?([^/:]+)(:(\d+))?/(.+)$""".r.pattern.matcher(uri)
     m.find
     val mongoConn = MongoConnection(m.group(4),
-				    (if (m.group(6) != null) m.group(6).toInt else 27017))
+      (if (m.group(6) != null) m.group(6).toInt else 27017))
     val mongoDB = mongoConn(m.group(7))
     if (m.group(1) != null)
       mongoDB.authenticate(m.group(2), m.group(3))
@@ -25,16 +25,13 @@ object Database {
   private val mongoDB = uriToDb(mongoUri)
   private val statusColl = mongoDB("status")
 
-  private val buildAgents: Map[BuildKind, Agent[Option[DBObject]]] =
-    BuildKind.kinds map { key =>
-      val value = statusColl.findOne(MongoDBObject("kind" -> key.name))
-      (key -> Agent(value)(Akka.system))
-    } toMap
+  private implicit val defaultSystemForAgent = Akka.system
 
-  private val messageAgent: Agent[Option[DBObject]] = {
-    val value = statusColl.findOne(MongoDBObject("kind" -> "message"))
-    Agent(value)(Akka.system)
-  }
+  private val buildAgents: Map[BuildKind, Agent[Option[DBObject]]] =
+    BuildKind.kinds.map(key => key -> Agent(statusColl.findOne(MongoDBObject("kind" -> key.name))))(collection.breakOut)
+
+  private val messageAgent: Agent[Option[DBObject]] =
+    Agent(statusColl.findOne(MongoDBObject("kind" -> "message")))
 
   private def versionFor(kind: BuildKind) = {
     val obj = MongoDBObject("kind" -> kind.name)
@@ -52,10 +49,10 @@ object Database {
     builder += "kind" -> "message"
     builder ++= data
     statusColl.findOne(MongoDBObject("kind" -> "message")) match {
-	case Some(obj) => builder += "_id" -> obj("_id")
-	case None      =>
+      case Some(obj) => builder += "_id" -> obj("_id")
+      case None      =>
     }
-    val newMessage = builder.result
+    val newMessage = builder.result()
     messageAgent send (_ => Some(newMessage))
     statusColl += newMessage
   }
@@ -67,7 +64,7 @@ object Database {
     statusColl -= MongoDBObject("kind" -> kind.name)
   }
 
-  def deleteMessage {
+  def deleteMessage() {
     messageAgent send (_ => None)
     statusColl -= MongoDBObject("kind" -> "message")
   }

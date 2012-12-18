@@ -2,12 +2,10 @@ package models
 
 object Counters {
 
-  import BuildKind._
-
   private val counters: Map[BuildKind, Counter] =
     Map(Release -> new Counter(500),
-	ReleaseCandidate -> new Counter(10),
-	NightlyBuild -> new Counter(10))
+      ReleaseCandidate -> new Counter(10),
+      NightlyBuild -> new Counter(10))
 
   def reset(kind: BuildKind) {
     counters(kind).reset()
