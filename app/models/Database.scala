@@ -42,6 +42,9 @@ object Database {
     val newVersion = versionFor(kind) + ("code" -> versionCode) + ("name" -> versionName)
     buildAgents(kind) send (_ => Some(newVersion))
     statusColl += newVersion
+    // When we setup a new release, the release candidate should be cleared
+    if (kind == Release)
+      deleteKind(ReleaseCandidate)
   }
 
   def updateMessage(data: Map[String, String]) {
