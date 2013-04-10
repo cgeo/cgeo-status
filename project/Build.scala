@@ -1,6 +1,6 @@
 import sbt._
 import Keys._
-import PlayProject._
+import play.Project._
 
 object ApplicationBuild extends Build {
 
@@ -8,12 +8,13 @@ object ApplicationBuild extends Build {
     val appVersion      = "1.0"
 
     val appDependencies = Seq(
-      "com.typesafe.akka" % "akka-agent" % "2.0.1",
-      "com.mongodb.casbah" %% "casbah" % "2.1.5-1"
+      "com.typesafe.akka" %% "akka-agent" % "2.1.2",
+      "org.mongodb" %% "casbah" % "2.5.0"
     )
 
-    val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(
-      resolvers += "Sonatype OSS releases" at "https://oss.sonatype.org/content/repositories/releases/"
+    val main = play.Project(appName, appVersion, appDependencies).settings(
+      resolvers ++= Seq("Sonatype OSS releases" at "https://oss.sonatype.org/content/repositories/releases/",
+			"Sonatype OSS snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/")
     )
 
 }
