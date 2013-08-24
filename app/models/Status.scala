@@ -5,7 +5,7 @@ import com.mongodb.casbah.Imports._
 object Status {
 
   private val nightlyBuildRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-NB(\d+)?-[0-9a-f]+$""".r
-  private val releaseCandidateRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-RC(\d+)?-[0-9a-f]+$""".r
+  private val releaseCandidateRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-RC(\d+)?$""".r
   private val releaseRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d(-\d+|[a-z])?$""".r
 
   def kind(versionName: String) =
