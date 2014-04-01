@@ -9,7 +9,9 @@ object Status {
   private val releaseRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d(-\d+|[a-z])?$""".r
 
   def kind(versionName: String) =
-    if (releaseCandidateRegex.findFirstIn(versionName).isDefined)
+    if (versionName.endsWith("-legacy"))
+      Legacy
+    else if (releaseCandidateRegex.findFirstIn(versionName).isDefined)
       ReleaseCandidate
     else if (nightlyBuildRegex.findFirstIn(versionName).isDefined)
       NightlyBuild
@@ -69,6 +71,13 @@ object Status {
           newNightly
         else {
           Counters.count(NightlyBuild)
+          nothing
+        }
+      case Legacy =>
+        if (moreRecent(Legacy))
+          newRelease
+        else {
+          Counters.count(Legacy)
           nothing
         }
       case DeveloperBuild =>
