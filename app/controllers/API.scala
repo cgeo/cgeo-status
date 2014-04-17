@@ -10,7 +10,9 @@ object API extends Controller {
   private val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
 
   def status(version_code: Int, version_name: String) = Action {
-    models.Status.status(version_code, version_name) map { data =>
+    val (kind, status) = models.Status.status(version_code, version_name)
+    Counters.count(kind)
+    status map { data =>
       Ok(toJson(data))
     } getOrElse Ok(toJson(Map("status" -> "up-to-date")))
   }

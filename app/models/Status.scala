@@ -46,42 +46,34 @@ object Status {
         (versionCode == ref.as[Int]("code") && versionName < ref.as[String]("name"))
     } getOrElse false
 
-  def status(versionCode: Int, versionName: String): Option[Map[String, String]] = {
+  def status(versionCode: Int, versionName: String): (BuildKind, Option[Map[String, String]]) = {
     def moreRecent(kind: BuildKind) =
       checkMoreRecent(versionCode, versionName, Database.latestVersionFor(kind))
     kind(versionName) match {
       case Release =>
         if (moreRecent(Release))
-          newRelease
-        else {
-          Counters.count(Release)
-          nothing
-        }
+          (Other, newRelease)
+        else
+          (Release, nothing)
       case ReleaseCandidate =>
         if (moreRecent(Release))
-          newRelease
+          (Other, newRelease)
         else if (moreRecent(ReleaseCandidate))
-          newRC
-        else {
-          Counters.count(ReleaseCandidate)
-          nothing
-        }
+          (Other, newRC)
+        else
+          (ReleaseCandidate, nothing)
       case NightlyBuild =>
         if (moreRecent(NightlyBuild))
-          newNightly
-        else {
-          Counters.count(NightlyBuild)
-          nothing
-        }
+          (Other, newNightly)
+        else
+          (NightlyBuild, nothing)
       case Legacy =>
         if (moreRecent(Legacy))
-          newRelease
-        else {
-          Counters.count(Legacy)
-          nothing
-        }
+          (Other, newRelease)
+        else
+          (Legacy, nothing)
       case DeveloperBuild =>
-        nothing
+        (DeveloperBuild, nothing)
     }
   }
 

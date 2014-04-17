@@ -1,4 +1,4 @@
-@(versions: Seq[(com.mongodb.DBObject, String, Option[Long])], message: Option[com.mongodb.DBObject], total: Long)
+@(versions: Seq[(com.mongodb.DBObject, Option[String], Option[Long])], message: Option[com.mongodb.DBObject], total: Long)
 
 @main("c:geo status supervision") {
 
@@ -13,9 +13,20 @@
   </tr>
   @for((version, url, users) <- versions) {
     <tr>
-      <td><a href="@url">@version.get("kind")</a></td>
+      <td>@url match {
+            case Some(u) => {
+              <a href="@u">@version.get("kind")</a>
+            }
+            case None    => {
+              @version.get("kind")
+            }
+          }
+      </td>
       <td>@version.get("name")</td>
-      <td>@version.get("code")</td>
+      <td>@version.get("code") match {
+          case n if n == 0 => { }
+          case n           => { @n.toString }
+      }</td>
       <td>@(users.map(_.toString).getOrElse("?"))</td>
       <td>@(users.map(u => "%.1f%%".format(100.0 * u / total)).getOrElse("?"))</td>
     </tr>
