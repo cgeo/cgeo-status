@@ -13,7 +13,7 @@ object Application extends Controller {
            url = version.url;
            users = Counters.users(version))
       yield (content, url, users)
-    val total = versions.collect { case (_, _, Some(n)) => n } .sum.max(1)
+    val total = versions.collect { case (_, _, Some(n)) => n } .sum
     Ok(views.html.index(versions, Database.getMessage, total))
   }
 
