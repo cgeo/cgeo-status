@@ -5,28 +5,15 @@ import com.mongodb.casbah.Imports._
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
 import play.api.libs.concurrent.Execution.Implicits._
+import com.mongodb.casbah
 
 object Database {
 
-  // The host and database fragments cannot be empty. A malformed URI will not do
-  // pretty things.
-  private def uriToDb(uri: String) = {
-    val m = """^mongodb://(([^/:@]+):([^:/@]+)@)?([^/:]+)(:(\d+))?/(.+)$""".r.pattern.matcher(uri)
-    m.find
-    val mongoConn = MongoConnection(m.group(4),
-      (if (m.group(6) != null) m.group(6).toInt else 27017))
-    val mongoDB = mongoConn(m.group(7))
-    if (m.group(1) != null)
-      mongoDB.authenticate(m.group(2), m.group(3))
-    mongoDB
-  }
-
   private val mongoUri =
     Option(System.getenv("MONGOLAB_URI")) getOrElse "mongodb://localhost:27017/cgeo-status"
-  private val mongoDB = uriToDb(mongoUri)
+  private val mongoClientURI = MongoClientURI(mongoUri)
+  private val mongoDB = MongoClient(mongoClientURI).getDB(mongoClientURI.database.get)
   private val statusColl = mongoDB("status")
-
-  private implicit val defaultSystemForAgent = Akka.system
 
   private val buildAgents: Map[BuildKind, Agent[Option[DBObject]]] =
     BuildKind.kinds.map(key => key -> Agent(statusColl.findOne(MongoDBObject("kind" -> key.name))))(collection.breakOut)
