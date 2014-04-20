@@ -4,6 +4,7 @@ import akka.agent.Agent
 import com.mongodb.casbah.Imports._
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits._
 
 object Database {
 

@@ -37,5 +37,5 @@ object Other extends BuildKind {
 
 object BuildKind {
   val kinds: Seq[BuildKind] = Seq(Release, Legacy, ReleaseCandidate, NightlyBuild, DeveloperBuild, Other)
-  val fromName = kinds.map(kind => (kind.name -> kind)).toMap
+  val fromName = kinds.map(kind => kind.name -> kind).toMap
 }

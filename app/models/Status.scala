@@ -41,10 +41,10 @@ object Status {
   def nothing = Database.getMessage.map(_.mapValues(_.toString).toMap)
 
   private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[DBObject]) =
-    reference map { ref =>
+    reference exists { ref =>
       versionCode < ref.as[Int]("code") ||
         (versionCode == ref.as[Int]("code") && versionName < ref.as[String]("name"))
-    } getOrElse false
+    }
 
   def status(versionCode: Int, versionName: String): (BuildKind, Option[Map[String, String]]) = {
     def moreRecent(kind: BuildKind) =

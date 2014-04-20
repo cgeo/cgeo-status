@@ -1,12 +1,11 @@
 package models
 
 import akka.agent.Agent
-import play.api.libs.concurrent.Akka
-import play.api.Play.current
+import play.api.libs.concurrent.Execution.Implicits._
 
 class Counter(sampleSize: Int) {
 
-  private[this] val times = Agent(List[Long]())(Akka.system)
+  private[this] val times = Agent(List[Long]())
 
   def reset() {
     times send (_ => List())
