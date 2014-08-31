@@ -1,6 +1,5 @@
 package models
 
-import akka.agent.Agent
 import com.mongodb.casbah.Imports._
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
@@ -15,11 +14,10 @@ object Database {
   private val mongoDB = MongoClient(mongoClientURI).getDB(mongoClientURI.database.get)
   private val statusColl = mongoDB("status")
 
-  private val buildAgents: Map[BuildKind, Agent[Option[DBObject]]] =
-    BuildKind.kinds.map(key => key -> Agent(statusColl.findOne(MongoDBObject("kind" -> key.name))))(collection.breakOut)
+  private var buildVersions: Map[BuildKind, DBObject] =
+    BuildKind.kinds.flatMap(key => statusColl.findOne(MongoDBObject("kind" -> key.name)).map(key -> _)).toMap
 
-  private val messageAgent: Agent[Option[DBObject]] =
-    Agent(statusColl.findOne(MongoDBObject("kind" -> "message")))
+  private var message: Option[DBObject] = statusColl.findOne(MongoDBObject("kind" -> "message"))
 
   private def versionFor(kind: BuildKind) = {
     val obj = MongoDBObject("kind" -> kind.name)
@@ -28,7 +26,7 @@ object Database {
 
   def updateVersionFor(kind: BuildKind, versionCode: Int, versionName: String) {
     val newVersion = versionFor(kind) + ("code" -> versionCode) + ("name" -> versionName)
-    buildAgents(kind) send (_ => Some(newVersion))
+    buildVersions += kind -> newVersion
     statusColl += newVersion
     // When we setup a new release, the release candidate should be cleared
     if (kind == Release)
@@ -44,22 +42,22 @@ object Database {
       case None      =>
     }
     val newMessage = builder.result()
-    messageAgent send (_ => Some(newMessage))
+    message = Some(newMessage)
     statusColl += newMessage
   }
 
-  def getMessage = messageAgent()
+  def getMessage = message
 
   def deleteKind(kind: BuildKind) {
-    buildAgents(kind) send (_ => None)
+    buildVersions -= kind
     statusColl -= MongoDBObject("kind" -> kind.name)
   }
 
   def deleteMessage() {
-    messageAgent send (_ => None)
+    message = None
     statusColl -= MongoDBObject("kind" -> "message")
   }
 
-  def latestVersionFor(kind: BuildKind): Option[DBObject] = buildAgents(kind)()
+  def latestVersionFor(kind: BuildKind): Option[DBObject] = buildVersions.get(kind)
 
 }

@@ -6,9 +6,9 @@ object Counters {
     Map(Release -> new Counter(500),
         ReleaseCandidate -> new Counter(10),
         NightlyBuild -> new Counter(10),
-        Legacy -> new Counter(10),
+        Legacy -> new Counter(20),
         DeveloperBuild -> new Counter(10),
-        Other -> new Counter(100))
+        Other -> new Counter(200))
 
   def reset(kind: BuildKind) {
     counters(kind).reset()

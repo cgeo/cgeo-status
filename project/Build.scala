@@ -7,7 +7,6 @@ object ApplicationBuild extends Build {
     val appVersion      = "1.0"
 
     val appDependencies = Seq(
-      "com.typesafe.akka" %% "akka-agent" % "2.3.4",
       "org.mongodb" %% "casbah" % "2.7.3"
     )
 
