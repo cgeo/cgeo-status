@@ -28,9 +28,11 @@ object Database {
     val newVersion = versionFor(kind) + ("code" -> versionCode) + ("name" -> versionName)
     buildVersions += kind -> newVersion
     statusColl += newVersion
-    // When we setup a new release, the release candidate should be cleared
-    if (kind == Release)
+    // When we setup a new release, the release candidate and deployement should be cleared
+    if (kind == Release) {
       deleteKind(ReleaseCandidate)
+      deleteKind(Deployement)
+    }
   }
 
   def updateMessage(data: Map[String, String]) {

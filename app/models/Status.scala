@@ -15,9 +15,12 @@ object Status {
       ReleaseCandidate
     else if (nightlyBuildRegex.findFirstIn(versionName).isDefined)
       NightlyBuild
-    else if (releaseRegex.findFirstIn(versionName).isDefined)
-      Release
-    else
+    else if (releaseRegex.findFirstIn(versionName).isDefined) {
+      if (Database.latestVersionFor(Deployement).exists(_.as[String]("name") == versionName))
+        Deployement
+      else
+        Release
+    } else
       DeveloperBuild
 
   private val newRelease =
@@ -55,6 +58,8 @@ object Status {
           (Other, newRelease)
         else
           (Release, nothing)
+      case Deployement =>
+          (Deployement, nothing)
       case ReleaseCandidate =>
         if (moreRecent(Release))
           (Other, newRelease)
