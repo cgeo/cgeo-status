@@ -1,10 +1,10 @@
+In this document, `SECRET` means a key known by people with access to the Heroku application.
+
 To update the [status page](http://status.cgeo.org/) with the new release information, you need to include the following step in your nightly build process, at the end, when the executable is ready to be downloaded:
 
 ```bash
 curl -X POST http://status.cgeo.org/api/update/nightly --data "key=SECRET" --data "version_code=YYYYMMDD" --data "version_name=YYYY.MM.DD-NB-SHA1"
 ```
-
-I will send you `SECRET` in a private message.
 
 Same for release candidates, using
 
