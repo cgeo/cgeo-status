@@ -3,31 +3,31 @@ package models
 class Counter(sampleSize: Int) {
 
   private[this] val times = new Array[Long](sampleSize)
-  private[this] var lastIndex = 0
+  private[this] var lastIndex = -1
   private[this] var complete = false
-  private[this] var usersCount = 0.0
+  private[this] var usersCount: Option[Double] = None
   private[this] val ratioNew = (5.0 / sampleSize).max(0.01).min(0.20)
   private[this] val ratioOld = 1 - ratioNew
 
   def reset() = synchronized {
-      lastIndex = 0
+      lastIndex = -1
       complete = false
-      usersCount = 0
+      usersCount = None
   }
 
   def count() = synchronized {
+    complete |= lastIndex == sampleSize - 1
     lastIndex = (lastIndex + 1) % sampleSize
-    complete |= lastIndex == 0
+    val last = times(lastIndex)
     val now = System.currentTimeMillis
     times(lastIndex) = now
     if (complete) {
-      val last = times((lastIndex + sampleSize - 1) % sampleSize)
-      val estimate = (sampleSize - 1.0) * Counter.MILLISECONDS_BETWEEN_STATUS_UPDATE / (last - now).max(1)
-      usersCount = usersCount * ratioOld + estimate * ratioNew
+      val estimate = sampleSize * Counter.MILLISECONDS_BETWEEN_STATUS_UPDATE / (now - last).max(1)
+      usersCount = Some(usersCount.getOrElse(0.0) * ratioOld + estimate * ratioNew)
     }
   }
 
-  def users: Option[Long] = if (complete) Some(usersCount.round) else None
+  def users: Option[Long] = usersCount.map(_.round)
 
 }
 
