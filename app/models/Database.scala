@@ -1,10 +1,6 @@
 package models
 
 import com.mongodb.casbah.Imports._
-import play.api.libs.concurrent.Akka
-import play.api.Play.current
-import play.api.libs.concurrent.Execution.Implicits._
-import com.mongodb.casbah
 
 object Database {
 
