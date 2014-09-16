@@ -12,7 +12,7 @@ object Release extends BuildKind {
 
 object Deployment extends BuildKind {
   val name = "deployment"
-  val url = Some("http://www.cgeo.org/cgeo-release.apk")
+  val url = Some("https://cgeo.org/cgeo-release.apk")
 }
 
 object Legacy extends BuildKind {
@@ -22,12 +22,12 @@ object Legacy extends BuildKind {
 
 object ReleaseCandidate extends BuildKind {
   val name = "rc"
-  val url  = Some("http://www.cgeo.org/cgeo-RC.apk")
+  val url  = Some("https://cgeo.org/cgeo-RC.apk")
 }
 
 object NightlyBuild extends BuildKind {
   val name = "nightly"
-  val url  = Some("http://www.cgeo.org/nightly.html")
+  val url  = Some("https://cgeo.org/nightly.html")
 }
 
 object DeveloperBuild extends BuildKind {

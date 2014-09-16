@@ -33,13 +33,13 @@ object Status {
     Some(Map("icon" -> "attribute_climbing",
       "message" -> "New release candidate available.\nClick to install.",
       "message_id" -> "status_new_rc",
-      "url" ->  "http://www.cgeo.org/cgeo-RC.apk"))
+      "url" ->  "https://cgeo.org/cgeo-RC.apk"))
 
   private val newNightly =
     Some(Map("icon" -> "attribute_climbing",
       "message" -> "New nightly build available.\nClick to install.",
       "message_id" -> "status_new_nightly",
-      "url" ->  "http://www.cgeo.org/c-geo-nightly.apk"))
+      "url" ->  "https://cgeo.org/c-geo-nightly.apk"))
 
   def nothing = Database.getMessage.map(_.mapValues(_.toString).toMap)
 
