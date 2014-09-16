@@ -16,8 +16,8 @@ object Status {
     else if (nightlyBuildRegex.findFirstIn(versionName).isDefined)
       NightlyBuild
     else if (releaseRegex.findFirstIn(versionName).isDefined) {
-      if (Database.latestVersionFor(Deployement).exists(_.as[String]("name") == versionName))
-        Deployement
+      if (Database.latestVersionFor(Deployment).exists(_.as[String]("name") == versionName))
+        Deployment
       else
         Release
     } else
@@ -58,8 +58,8 @@ object Status {
           (Other, newRelease)
         else
           (Release, nothing)
-      case Deployement =>
-          (Deployement, nothing)
+      case Deployment =>
+          (Deployment, nothing)
       case ReleaseCandidate =>
         if (moreRecent(Release))
           (Other, newRelease)

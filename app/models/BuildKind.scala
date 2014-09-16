@@ -10,8 +10,8 @@ object Release extends BuildKind {
   val url  = Some("https://play.google.com/store/apps/details?id=cgeo.geocaching")
 }
 
-object Deployement extends BuildKind {
-  val name = "deployement"
+object Deployment extends BuildKind {
+  val name = "deployment"
   val url = Some("http://www.cgeo.org/cgeo-release.apk")
 }
 
@@ -41,6 +41,6 @@ object Other extends BuildKind {
 }
 
 object BuildKind {
-  val kinds: Seq[BuildKind] = Seq(Deployement, Release, Legacy, ReleaseCandidate, NightlyBuild, DeveloperBuild, Other)
+  val kinds: Seq[BuildKind] = Seq(Deployment, Release, Legacy, ReleaseCandidate, NightlyBuild, DeveloperBuild, Other)
   val fromName = kinds.map(kind => kind.name -> kind).toMap
 }
