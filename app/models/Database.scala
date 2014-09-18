@@ -24,9 +24,15 @@ object Database {
     val newVersion = versionFor(kind) + ("code" -> versionCode) + ("name" -> versionName)
     buildVersions += kind -> newVersion
     statusColl += newVersion
-    // When we setup a new release, the release candidate and deployment should be cleared
     if (kind == Release) {
+      // When we setup a new release, the release candidate and deployment should be cleared
       deleteKind(ReleaseCandidate)
+      deleteKind(Deployment)
+    } else if (kind == Deployment) {
+      // When we setup a deployment version, the release candidate should be cleared
+      deleteKind(ReleaseCandidate)
+    } else if (kind == ReleaseCandidate) {
+      // If we are creating a new release candidate because of an issue in deployment, we should clear the deployment version
       deleteKind(Deployment)
     }
   }
