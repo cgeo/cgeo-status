@@ -10,7 +10,8 @@ object ApplicationBuild extends Build {
       "org.mongodb" %% "casbah" % "2.7.3"
     )
 
-    val main = Project(appName, file(".")).enablePlugins(play.PlayScala).settings(
+    lazy val main = (project in file(".")).enablePlugins(play.PlayScala).settings(
+      name := appName,
       scalaVersion := "2.11.2",
       version := appVersion,
       resolvers ++= Seq("Sonatype OSS releases" at "https://oss.sonatype.org/content/repositories/releases/",
