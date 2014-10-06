@@ -65,6 +65,6 @@ object Database {
   private def unnamedVersion(kind: BuildKind): DBObject = Map("kind" -> kind.name, "code" -> "", "name" -> "")
 
   def latestVersionFor(kind: BuildKind): Option[DBObject] =
-    if (BuildKind.concreteKinds contains kind) buildVersions.get(kind) else Some(unnamedVersion(kind))
+    if (BuildKind.upToDateKinds contains kind) buildVersions.get(kind) else Some(unnamedVersion(kind))
 
 }

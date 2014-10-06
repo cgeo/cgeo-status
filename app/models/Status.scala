@@ -50,7 +50,7 @@ object Status {
     }
 
   def status(versionCode: Int, versionName: String): (BuildKind, Option[Map[String, String]]) = {
-    def moreRecent(kind: BuildKind) =
+    def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, Database.latestVersionFor(kind))
     kind(versionName) match {
       case Release =>
