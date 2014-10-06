@@ -8,7 +8,7 @@ object Status {
   private val releaseCandidateRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-RC(\d+)?$""".r
   private val releaseRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d(-\d+|[a-z])?$""".r
 
-  def kind(versionName: String) =
+  def kind(versionName: String): UpToDateKind =
     if (versionName.endsWith("-legacy"))
       Legacy
     else if (releaseCandidateRegex.findFirstIn(versionName).isDefined)
@@ -55,26 +55,26 @@ object Status {
     kind(versionName) match {
       case Release =>
         if (moreRecent(Release))
-          (Other, newRelease)
+          (OldRelease, newRelease)
         else
           (Release, nothing)
       case Deployment =>
           (Deployment, nothing)
       case ReleaseCandidate =>
         if (moreRecent(Release))
-          (Other, newRelease)
+          (OldReleaseCandidate, newRelease)
         else if (moreRecent(ReleaseCandidate))
-          (Other, newRC)
+          (OldReleaseCandidate, newRC)
         else
           (ReleaseCandidate, nothing)
       case NightlyBuild =>
         if (moreRecent(NightlyBuild))
-          (Other, newNightly)
+          (OldNightlyBuild, newNightly)
         else
           (NightlyBuild, nothing)
       case Legacy =>
         if (moreRecent(Legacy))
-          (Other, newRelease)
+          (OldLegacy, newRelease)
         else
           (Legacy, nothing)
       case DeveloperBuild =>

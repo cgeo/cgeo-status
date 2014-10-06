@@ -62,6 +62,9 @@ object Database {
     statusColl -= MongoDBObject("kind" -> "message")
   }
 
-  def latestVersionFor(kind: BuildKind): Option[DBObject] = buildVersions.get(kind)
+  private def unnamedVersion(kind: BuildKind): DBObject = Map("kind" -> kind.name, "code" -> "", "name" -> "")
+
+  def latestVersionFor(kind: BuildKind): Option[DBObject] =
+    if (BuildKind.concreteKinds contains kind) buildVersions.get(kind) else Some(unnamedVersion(kind))
 
 }

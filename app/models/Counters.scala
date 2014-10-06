@@ -9,7 +9,10 @@ object Counters {
         NightlyBuild -> new Counter(10),
         Legacy -> new Counter(20),
         DeveloperBuild -> new Counter(10),
-        Other -> new Counter(200))
+        OldRelease -> new Counter(200),
+        OldReleaseCandidate -> new Counter(10),
+        OldNightlyBuild -> new Counter(10),
+        OldLegacy -> new Counter(10))
 
   def reset(kind: BuildKind) {
     counters(kind).reset()
