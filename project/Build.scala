@@ -12,7 +12,7 @@ object ApplicationBuild extends Build {
 
     lazy val main = (project in file(".")).enablePlugins(play.PlayScala).settings(
       name := appName,
-      scalaVersion := "2.11.2",
+      scalaVersion := "2.11.4",
       version := appVersion,
       resolvers ++= Seq("Sonatype OSS releases" at "https://oss.sonatype.org/content/repositories/releases/",
 			"Sonatype OSS snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"),
