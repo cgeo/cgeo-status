@@ -6,7 +6,7 @@ import models._
 
 object Application extends Controller {
 
-  def index = Action {
+  private[this] def versionsAndTotal() = {
     val versions =
       for (version <- BuildKind.kinds;
            content <- Database.latestVersionFor(version);
@@ -14,7 +14,17 @@ object Application extends Controller {
            users = Counters.users(version))
       yield (content, url, users)
     val total = versions.collect { case (_, _, Some(n)) => n } .sum
+    (versions, total)
+  }
+
+  def index = Action {
+    val (versions, total) = versionsAndTotal()
     Ok(views.html.index(versions, Database.getMessage, total))
+  }
+
+  def status = Action {
+    val (versions, total) = versionsAndTotal()
+    Ok(views.html.status(versions, Database.getMessage, total))
   }
 
 }

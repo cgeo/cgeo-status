@@ -4,6 +4,9 @@
 # Home page
 GET     /                           controllers.Application.index
 
+# Embeddable status page
+GET	/status			    controllers.Application.status
+
 # Status page
 GET	/api/status.json            controllers.API.status(version_code: Int, version_name: String)
 

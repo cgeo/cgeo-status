@@ -1,0 +1,12 @@
+@(versions: Seq[(com.mongodb.DBObject, Option[String], Option[Long])], message: Option[com.mongodb.DBObject], total: Long)
+
+<html>
+  <head>
+    <link rel="stylesheet" href="//cgeo.org/content/css/styles.css" type="text/css" media="all" />
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+  </head>
+  <body>
+    @statusraw(versions, message, total)
+  </body>
+</html>
+
