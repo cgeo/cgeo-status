@@ -6,13 +6,13 @@ abstract class UpToDateKind(name: String, url: Option[String]) extends BuildKind
 
 object Release extends UpToDateKind("release", Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"))
 
-object Deployment extends UpToDateKind("deployment", Some("http://cgeo.org/cgeo-release.apk"))
+object Deployment extends UpToDateKind("deployment", Some("http://download.cgeo.org/cgeo-release.apk"))
 
 object Legacy extends UpToDateKind("legacy", Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"))
 
-object ReleaseCandidate extends UpToDateKind("rc", Some("http://cgeo.org/cgeo-RC.apk"))
+object ReleaseCandidate extends UpToDateKind("rc", Some("http://download.cgeo.org/cgeo-RC.apk"))
 
-object NightlyBuild extends UpToDateKind("nightly", Some("http://cgeo.org/nightly.html"))
+object NightlyBuild extends UpToDateKind("nightly", Some("http://download.cgeo.org/cgeo-nightly.apk"))
 
 object DeveloperBuild extends UpToDateKind("developer", Some("https://github.com/cgeo/cgeo"))
 
