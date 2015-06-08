@@ -18,8 +18,7 @@ object Application extends Controller {
   }
 
   def index = Action {
-    val (versions, total) = versionsAndTotal()
-    Ok(views.html.index(versions, Database.getMessage, total))
+    MovedPermanently("//www.cgeo.org/status.html")
   }
 
   def status = Action {
