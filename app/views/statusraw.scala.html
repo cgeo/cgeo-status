@@ -13,7 +13,7 @@
     <tr>
       <td>@url match {
             case Some(u) => {
-              <a href="@u">@version.get("kind")</a>
+              <a href="@u" target="_top">@version.get("kind")</a>
             }
             case None    => {
               @version.get("kind")
@@ -54,7 +54,7 @@
 	}}</td>
       <td>@{m.get("url") match {
 	case null =>
-	case url: String => <a href={url}>{url}</a>
+	case url: String => <a href={url} target="_top">{url}</a>
       }}</td>
     </tr>
   </table>
@@ -63,4 +63,4 @@
 <br class="large"/>
 <h1>Older versions and source code</h1>
 
-Former releases of c:geo and their source code can be found on <a href="https://github.com/cgeo/cgeo/releases">c:geo GitHub release page</a>.
+Former releases of c:geo and their source code can be found on <a href="https://github.com/cgeo/cgeo/releases" target="_top">c:geo GitHub release page</a>.
