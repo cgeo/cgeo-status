@@ -5,7 +5,7 @@ import play.api.libs.json.Json._
 
 import models._
 
-object API extends Controller {
+class API extends Controller {
 
   private val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
 

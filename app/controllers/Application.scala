@@ -4,7 +4,7 @@ import play.api.mvc._
 
 import models._
 
-object Application extends Controller {
+class Application extends Controller {
 
   private[this] def versionsAndTotal() = {
     val versions =
