@@ -1,4 +1,5 @@
-@(versions: Seq[(com.mongodb.DBObject, Option[String], Option[Long])], message: Option[com.mongodb.DBObject], total: Long)
+@import models.{Message, Version}
+@(versions: Seq[(Version, Option[String], Option[Long])], message: Option[Message], total: Long)
 
 <h1>Current versions</h1>
 <table>
@@ -9,19 +10,19 @@
     <th><span title="Estimation based on recent status requests">Users online (estimated)</span></th>
     <th>% (estimated)</th>
   </tr>
-  @for((version, url, users) <- versions) {
+  @for((version, url, users) <- versions; kind = version.kind.name) {
     <tr>
       <td>@url match {
             case Some(u) => {
-              <a href="@u" target="_top">@version.get("kind")</a>
+              <a href="@u" target="_top">@kind</a>
             }
             case None    => {
-              @version.get("kind")
+              @kind
             }
           }
       </td>
-      <td>@version.get("name")</td>
-      <td>@version.get("code") match {
+      <td>@version.name</td>
+      <td>@version.code match {
           case n if n == 0 => { }
           case n           => { @n.toString }
       }</td>
@@ -44,17 +45,17 @@
   <table>
     <tr><th>Message</th><th>Message id</th><th>Icon</th><th>URL</th></tr>
     <tr>
-      <td>@m.get("message")</td>
-      <td>@m.get("message_id")</td>
-      <td>@{m.get("icon") match {
-	case null =>
-	case name: String =>
+      <td>@m.message</td>
+      <td>@m.message_id.getOrElse("")</td>
+      <td>@{m.icon match {
+	case None =>
+	case Some(name: String) =>
 	  val icon: String = "icons/" + name + ".png"
 	  <img src={routes.Assets.at(icon).toString} title={name} alt={name}/>
 	}}</td>
-      <td>@{m.get("url") match {
-	case null =>
-	case url: String => <a href={url} target="_top">{url}</a>
+      <td>@{m.url match {
+	case None =>
+	case Some(url: String) => <a href={url} target="_top">{url}</a>
       }}</td>
     </tr>
   </table>

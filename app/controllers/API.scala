@@ -1,25 +1,26 @@
 package controllers
 
+import com.google.inject.Inject
 import play.api.mvc._
 import play.api.libs.json.Json._
 
 import models._
 
-class API extends Controller {
+class API @Inject() (database: Database, status: Status) extends Controller {
 
   private val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
 
-  def status(version_code: Int, version_name: String) = Action {
-    val (kind, status) = models.Status.status(version_code, version_name)
+  def getStatus(version_code: Int, version_name: String) = Action {
+    val (kind, stat) = status.status(version_code, version_name)
     Counters.count(kind)
-    status map { data =>
+    stat map { data =>
       Ok(toJson(data))
     } getOrElse Ok(toJson(Map("status" -> "up-to-date")))
   }
 
   private def checkKey(params: Map[String, Seq[String]])(body: Map[String, String] => Result) =
-    if (params.get("key") == Some(Seq(API_KEY)))
-      body(params.collect { case (k, Seq(v)) => (k -> v) })
+    if (params.get("key").contains(Seq(API_KEY)))
+      body(params.collect { case (k, Seq(v)) => k -> v })
     else
       Forbidden("wrong or missing key")
 
@@ -31,7 +32,7 @@ class API extends Controller {
           (for (versionCode <- params.get("version_code");
                 versionName <- params.get("version_name"))
           yield {
-            Database.updateVersionFor(k, versionCode.toInt, versionName)
+            database.updateVersionFor(Version(k, versionName, versionCode.toInt))
             Counters.reset(k)
             Ok("updated")
           }) getOrElse BadRequest("invalid parameters")
@@ -45,7 +46,7 @@ class API extends Controller {
     if (key == API_KEY)
       BuildKind.fromName.get(kind) match {
         case Some(k) =>
-          Database.deleteKind(k)
+          database.deleteKind(k)
           Ok("deleted")
         case None    =>
           BadRequest("unknown kind")
@@ -59,7 +60,7 @@ class API extends Controller {
     checkKey(params) { params =>
       params.get("message") match {
         case Some(message) =>
-          Database.updateMessage(params - "key")
+          database.updateMessage(Message(message, params.get("message_id"), params.get("icon"), params.get("url")))
           Ok("updated")
         case None =>
           BadRequest("invalid parameters")
@@ -69,7 +70,7 @@ class API extends Controller {
 
   def deleteMessage(key: String) = Action {
     if (key == API_KEY) {
-      Database.deleteMessage()
+      database.deleteMessage()
       Ok("deleted")
     } else
       Forbidden

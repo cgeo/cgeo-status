@@ -1,4 +1,5 @@
-@(versions: Seq[(com.mongodb.DBObject, Option[String], Option[Long])], message: Option[com.mongodb.DBObject], total: Long)
+@import models.{Message, Version}
+@(versions: Seq[(Version, Option[String], Option[Long])], message: Option[Message], total: Long)
 
 <html>
   <head>

@@ -1,8 +1,8 @@
 package models
 
-import com.mongodb.casbah.Imports._
+import com.google.inject.Inject
 
-object Status {
+class Status @Inject() (database: Database) {
 
   private val nightlyBuildRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-NB(\d+)?-[0-9a-f]+$""".r
   private val releaseCandidateRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-RC(\d+)?$""".r
@@ -16,65 +16,57 @@ object Status {
     else if (nightlyBuildRegex.findFirstIn(versionName).isDefined)
       NightlyBuild
     else if (releaseRegex.findFirstIn(versionName).isDefined) {
-      if (Database.latestVersionFor(Deployment).exists(_.as[String]("name") == versionName))
+      if (database.latestVersionFor(Deployment).exists(_.name == versionName))
         Deployment
       else
         Release
     } else
       DeveloperBuild
 
-  private val newRelease =
-    Some(Map("icon" -> "attribute_climbing",
-      "message" -> "New release available.\nClick to install.",
-      "message_id" -> "status_new_release",
-      "url" ->  "https://play.google.com/store/apps/details?id=cgeo.geocaching"))
+  private val newRelease = Message("New release available.\nClick to install.",
+    Some("status_new_release"), Some("attribute_climbing"),
+    Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"))
 
-  private val newRC =
-    Some(Map("icon" -> "attribute_climbing",
-      "message" -> "New release candidate available.\nClick to install.",
-      "message_id" -> "status_new_rc",
-      "url" ->  "http://download.cgeo.org/cgeo-RC.apk"))
+  private val newRC = Message("New release candidate available.\nClick to install.",
+    Some("status_new_rc"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-RC.apk"))
 
-  private val newNightly =
-    Some(Map("icon" -> "attribute_climbing",
-      "message" -> "New nightly build available.\nClick to install.",
-      "message_id" -> "status_new_nightly",
-      "url" ->  "http://download.cgeo.org/cgeo-nightly.apk"))
+  private val newNightly = Message("New nightly build available.\nClick to install.",
+    Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk"))
 
-  def nothing = Database.getMessage.map(_.mapValues(_.toString).toMap)
+  def nothing = database.getMessage
 
-  private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[DBObject]) =
+  private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[Version]) =
     reference exists { ref =>
-      versionCode < ref.as[Int]("code") ||
-        (versionCode == ref.as[Int]("code") && versionName < ref.as[String]("name"))
+      versionCode < ref.code ||
+        (versionCode == ref.code && versionName < ref.name)
     }
 
-  def status(versionCode: Int, versionName: String): (BuildKind, Option[Map[String, String]]) = {
+  def status(versionCode: Int, versionName: String): (BuildKind, Option[Message]) = {
     def moreRecent(kind: UpToDateKind) =
-      checkMoreRecent(versionCode, versionName, Database.latestVersionFor(kind))
+      checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))
     kind(versionName) match {
       case Release =>
         if (moreRecent(Release))
-          (OldRelease, newRelease)
+          (OldRelease, Some(newRelease))
         else
           (Release, nothing)
       case Deployment =>
           (Deployment, nothing)
       case ReleaseCandidate =>
         if (moreRecent(Release))
-          (OldReleaseCandidate, newRelease)
+          (OldReleaseCandidate, Some(newRelease))
         else if (moreRecent(ReleaseCandidate))
-          (OldReleaseCandidate, newRC)
+          (OldReleaseCandidate, Some(newRC))
         else
           (ReleaseCandidate, nothing)
       case NightlyBuild =>
         if (moreRecent(NightlyBuild))
-          (OldNightlyBuild, newNightly)
+          (OldNightlyBuild, Some(newNightly))
         else
           (NightlyBuild, nothing)
       case Legacy =>
         if (moreRecent(Legacy))
-          (OldLegacy, newRelease)
+          (OldLegacy, Some(newRelease))
         else
           (Legacy, nothing)
       case DeveloperBuild =>

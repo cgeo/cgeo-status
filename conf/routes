@@ -8,7 +8,7 @@ GET     /                           controllers.Application.index
 GET	/status			    controllers.Application.status
 
 # Status page
-GET	/api/status.json            controllers.API.status(version_code: Int, version_name: String)
+GET	/api/status.json            controllers.API.getStatus(version_code: Int, version_name: String)
 
 # Update message
 POST    /api/update/message         controllers.API.updateMessage()
