@@ -1,17 +1,28 @@
 package controllers
 
+import akka.actor.{ActorRef, Props}
+import akka.stream.OverflowStrategy
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
-import play.api.mvc._
-import play.api.libs.json.Json._
-
+import com.google.inject.name.Named
+import controllers.geoip.GeoIPActor.ClientInfo
+import controllers.geoip.GeoIPWebSocket
 import models._
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json._
+import play.api.mvc._
 
-class API @Inject() (database: Database, status: Status) extends Controller {
+class API @Inject() (database: Database, status: Status, @Named("geoip-actor") geoIPActor: ActorRef) extends Controller {
 
-  private val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
+  private[this] val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
 
-  def getStatus(version_code: Int, version_name: String) = Action {
+  private[this] def requestIP(request: Request[AnyContent]): String =
+    request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
+
+  def getStatus(version_code: Int, version_name: String) = Action { request =>
     val (kind, stat) = status.status(version_code, version_name)
+    val locale = request.getQueryString("locale").getOrElse("")
+    geoIPActor ! ClientInfo(requestIP(request), locale, kind)
     Counters.count(kind)
     stat map { data =>
       Ok(toJson(data))
@@ -74,6 +85,12 @@ class API @Inject() (database: Database, status: Status) extends Controller {
       Ok("deleted")
     } else
       Forbidden
+  }
+
+  def locations = WebSocket.accept[JsValue, JsValue] { request =>
+    // Accumulate up to 50 late positions, then drop the whole buffer if the client cannot accomodate the rate
+    val source = Source.actorPublisher[JsValue](Props(new GeoIPWebSocket(geoIPActor))).buffer(50, OverflowStrategy.dropBuffer)
+    Flow.fromSinkAndSource(Sink.ignore, source)
   }
 
 }

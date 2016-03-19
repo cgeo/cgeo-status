@@ -3,3 +3,4 @@ table tr{border-bottom:1px solid #eee;}
 table td{text-align:center;}
 table tr:nth-of-type(even){background:#2a2a2a;}
 br.large{margin:2em}
+#map {height: 70%;}
