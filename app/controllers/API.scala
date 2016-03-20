@@ -101,7 +101,14 @@ class API @Inject() (database: Database, status: Status,
 
   def countByKind = Action.async {
     counterActor.ask(GetUserCountByKind)(counterTimeout).mapTo[Map[BuildKind, Long]].map { counters =>
-      Ok(JsObject(counters.map { case (kind, count) => kind.name -> JsNumber(count) }))
+      Ok(JsObject(counters.map { case (kind, count) =>
+        database.latestVersionFor(kind) match {
+          case Some(version) if version.code != 0 =>
+            kind.name -> Json.obj("count" -> count, "versionCode" -> version.code, "versionName" -> version.name)
+          case _ =>
+            kind.name -> Json.obj("count" -> count)
+        }
+      }))
     } recover {
       case t: Throwable =>
         Logger.error("cannot retrieve count by kind", t)
