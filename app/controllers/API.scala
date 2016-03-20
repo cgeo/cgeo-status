@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorRef, Props}
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
@@ -8,11 +10,16 @@ import com.google.inject.name.Named
 import controllers.geoip.GeoIPActor.ClientInfo
 import controllers.geoip.GeoIPWebSocket
 import models._
-import play.api.libs.json.JsValue
+import play.api.Configuration
 import play.api.libs.json.Json._
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 
-class API @Inject() (database: Database, status: Status, @Named("geoip-actor") geoIPActor: ActorRef) extends Controller {
+import scala.concurrent.duration._
+
+class API @Inject() (database: Database, status: Status,
+                     @Named("geoip-actor") geoIPActor: ActorRef,
+                     config: Configuration) extends Controller {
 
   private[this] val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
 
@@ -87,9 +94,15 @@ class API @Inject() (database: Database, status: Status, @Named("geoip-actor") g
       Forbidden
   }
 
+  private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
+  private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
+
   def locations = WebSocket.accept[JsValue, JsValue] { request =>
-    // Accumulate up to 50 late positions, then drop the whole buffer if the client cannot accomodate the rate
-    val source = Source.actorPublisher[JsValue](Props(new GeoIPWebSocket(geoIPActor))).buffer(50, OverflowStrategy.dropBuffer)
+    // Group positions together, in 5 batches if backpressured, then drop the whole buffer if the client cannot accommodate the rate
+    val source = Source.actorPublisher[JsValue](Props(new GeoIPWebSocket(geoIPActor)))
+      .groupedWithin(maxBatchSize, maxBatchInterval)
+      .map(g => Json.obj("clients" -> g))
+      .buffer(5, OverflowStrategy.dropBuffer)
     Flow.fromSinkAndSource(Sink.ignore, source)
   }
 

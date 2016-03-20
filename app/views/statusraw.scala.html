@@ -77,7 +77,11 @@ Former releases of c:geo and their source code can be found on <a href="https://
       function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
           center: {lat: 48.0, lng: -30.0},
-          zoom: 3
+          zoom: 3,
+          fullscreenControl: true,
+          streetViewControl: false,
+          rotateControl: false,
+          scaleControl: false
         });
         var heatmapData = [];
         var heatmap = new google.maps.visualization.HeatmapLayer({
@@ -88,15 +92,16 @@ Former releases of c:geo and their source code can be found on <a href="https://
         var ws = new WebSocket("wss://cgeo-status.herokuapp.com/api/locations");
         ws.onmessage = function(msg) {
             var data = JSON.parse(msg.data);
-            var label = data.kind[0].toUpperCase()
-            var position = {lat: data.latitude, lng: data.longitude};
-            heatmapData.push(new google.maps.LatLng(data.latitude, data.longitude));
-            var marker = new google.maps.Marker({
-                position: position,
-                map: map,
-                label: label
+            data.clients.map(function(client) {
+                var label = client.kind[0].toUpperCase()
+                heatmapData.push(new google.maps.LatLng(client.latitude, client.longitude));
+                var marker = new google.maps.Marker({
+                    position: {lat: client.latitude, lng: client.longitude},
+                    map: map,
+                    label: label
+                });
+                window.setTimeout(function() { marker.setMap(null); }, 10000);
             });
-            window.setTimeout(function() { marker.setMap(null); }, 10000);
         };
         window.setInterval(function() {
             if (heatmapData.length > 1000)
