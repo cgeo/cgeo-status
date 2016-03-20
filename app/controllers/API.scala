@@ -3,25 +3,30 @@ package controllers
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, Props}
+import akka.pattern.ask
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import controllers.geoip.GeoIPActor.ClientInfo
+import controllers.geoip.GeoIPActor.UserInfo
 import controllers.geoip.GeoIPWebSocket
+import CounterActor.{GetAllUsers, GetUserCountByKind}
 import models._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json._
 import play.api.mvc._
 
 import scala.concurrent.duration._
 
 class API @Inject() (database: Database, status: Status,
                      @Named("geoip-actor") geoIPActor: ActorRef,
+                     @Named("counter-actor") counterActor: ActorRef,
                      config: Configuration) extends Controller {
 
   private[this] val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
+  private[this] val counterTimeout = Duration(config.getMilliseconds("count-request-timeout").get, TimeUnit.MILLISECONDS)
 
   private[this] def requestIP(request: Request[AnyContent]): String =
     request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
@@ -29,7 +34,7 @@ class API @Inject() (database: Database, status: Status,
   def getStatus(version_code: Int, version_name: String) = Action { request =>
     val (kind, stat) = status.status(version_code, version_name)
     val locale = request.getQueryString("locale").getOrElse("")
-    geoIPActor ! ClientInfo(requestIP(request), locale, kind)
+    geoIPActor ! UserInfo(requestIP(request), locale, kind)
     Counters.count(kind)
     stat map { data =>
       Ok(toJson(data))
@@ -92,6 +97,26 @@ class API @Inject() (database: Database, status: Status,
       Ok("deleted")
     } else
       Forbidden
+  }
+
+  def countByKind = Action.async {
+    counterActor.ask(GetUserCountByKind)(counterTimeout).mapTo[Map[BuildKind, Long]].map { counters =>
+      Ok(JsObject(counters.map { case (kind, count) => kind.name -> JsNumber(count) }))
+    } recover {
+      case t: Throwable =>
+        Logger.error("cannot retrieve count by kind", t)
+        InternalServerError("unable to retrieve count by kind")
+    }
+  }
+
+  def recentLocations = Action.async {
+    counterActor.ask(GetAllUsers)(counterTimeout).mapTo[List[User]].map { users =>
+      Ok(JsArray(users.collect { case user if user.coords.isDefined => user.toJson }))
+    } recover {
+      case t: Throwable =>
+        Logger.error("cannot retrieve recent locations", t)
+        InternalServerError("unable to retrieve recent locations")
+    }
   }
 
   private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)

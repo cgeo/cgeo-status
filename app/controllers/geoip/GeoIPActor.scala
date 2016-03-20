@@ -4,13 +4,12 @@ import java.io.File
 
 import akka.actor.{Actor, ActorRef, Terminated}
 import com.google.inject.Inject
-import com.sanoma.cda.geo.Point
+import com.google.inject.name.Named
 import com.sanoma.cda.geoip.MaxMindIpGeo
-import models.BuildKind
-import play.api.libs.json.Json
+import models.{BuildKind, User}
 import play.api.{Configuration, Logger}
 
-class GeoIPActor @Inject() (config: Configuration) extends Actor {
+class GeoIPActor @Inject() (config: Configuration, @Named("counter-actor") counterActor: ActorRef) extends Actor {
 
   import GeoIPActor._
 
@@ -30,18 +29,11 @@ class GeoIPActor @Inject() (config: Configuration) extends Actor {
         case t: Throwable => Logger.error("cannot use geoip file", t)
       }
 
-    case ClientInfo(ip, locale, kind) =>
-      if (clients.nonEmpty)
-        geoIP match {
-          case Some(g) =>
-            g.getLocation(ip).flatMap(_.geoPoint) match {
-              case Some(Point(latitude, longitude)) =>
-                clients.foreach(_ ! Json.obj("latitude" -> latitude, "longitude" -> longitude,
-                  "locale" -> locale, "kind" -> kind.name))
-              case None =>
-            }
-          case None =>
-        }
+    case UserInfo(ip, locale, kind) =>
+      val user = User(kind, locale, geoIP.flatMap(_.getLocation(ip)).flatMap(_.geoPoint))
+      counterActor ! user
+      if (user.coords.isDefined && clients.nonEmpty)
+        clients.foreach(_ ! user)
 
     case Register(actorRef) =>
       clients += actorRef
@@ -54,7 +46,7 @@ class GeoIPActor @Inject() (config: Configuration) extends Actor {
 }
 
 object GeoIPActor {
-  case class ClientInfo(IP: String, locale: String, kind: BuildKind)
+  case class UserInfo(IP: String, locale: String, kind: BuildKind)
   case class Register(actorRef: ActorRef)
   case class UseGeoIPData(file: File)
   case class RemoveGeoIPData(file: File)

@@ -3,6 +3,7 @@ package controllers.geoip
 import akka.actor.ActorRef
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{Cancel, Request}
+import models.User
 import play.api.libs.json.{JsValue, Json}
 
 class GeoIPWebSocket(geoIPActor: ActorRef) extends ActorPublisher[JsValue] {
@@ -16,9 +17,9 @@ class GeoIPWebSocket(geoIPActor: ActorRef) extends ActorPublisher[JsValue] {
     case Cancel =>
       context.stop(self)
 
-    case data: JsValue =>
+    case user: User =>
       if (totalDemand > 0)
-        onNext(data)
+        onNext(user.toJson)
   }
 
 }

@@ -22,6 +22,12 @@ DELETE  /api/update/message         controllers.API.deleteMessage(key: String)
 # Delete release information
 DELETE  /api/update/:kind           controllers.API.delete(kind: String, key: String)
 
+# Get counter by kind
+GET /api/count/by-kind          controllers.API.countByKind
+
+# Get recent locations
+GET /api/recent-locations        controllers.API.recentLocations
+
 # Get location information
 GET /api/locations              controllers.API.locations
 
