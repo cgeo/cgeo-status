@@ -79,18 +79,32 @@ Former releases of c:geo and their source code can be found on <a href="https://
           center: {lat: 48.0, lng: -30.0},
           zoom: 3
         });
+        var heatmapData = [];
+        var heatmap = new google.maps.visualization.HeatmapLayer({
+            dissipating: true,
+            radius: 30
+        });
+        heatmap.setMap(map);
         var ws = new WebSocket("wss://cgeo-status.herokuapp.com/api/locations");
         ws.onmessage = function(msg) {
             var data = JSON.parse(msg.data);
             var label = data.kind[0].toUpperCase()
+            var position = {lat: data.latitude, lng: data.longitude};
+            heatmapData.push(new google.maps.LatLng(data.latitude, data.longitude));
             var marker = new google.maps.Marker({
-                position: {lat: data.latitude, lng: data.longitude},
+                position: position,
                 map: map,
                 label: label
             });
             window.setTimeout(function() { marker.setMap(null); }, 10000);
         };
+        window.setInterval(function() {
+            if (heatmapData.length > 1000)
+                heatmapData.splice(0, heatmapData.length - 1000);
+            heatmap.setData(heatmapData);
+        }, 10000);
+
       }
 </script>
 
-<script src="//maps.googleapis.com/maps/api/js?key=AIzaSyCAdIFp-YuYxGpOkcIpPwJ0B0XRZvJbHME&callback=initMap" async defer></script>
+<script src="//maps.googleapis.com/maps/api/js?key=AIzaSyCAdIFp-YuYxGpOkcIpPwJ0B0XRZvJbHME&callback=initMap&libraries=visualization" async defer></script>
