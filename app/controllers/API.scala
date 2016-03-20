@@ -116,9 +116,11 @@ class API @Inject() (database: Database, status: Status,
     }
   }
 
-  def recentLocations = Action.async {
+  def recentLocations = Action.async { request =>
+    val limit = request.queryString.get("limit").map(_.head.toInt)
     counterActor.ask(GetAllUsers)(counterTimeout).mapTo[List[User]].map { users =>
-      Ok(JsArray(users.collect { case user if user.coords.isDefined => user.toJson }))
+      val limited = limit.fold(users)(users.takeRight)
+      Ok(JsArray(limited.collect { case user if user.coords.isDefined => user.toJson }))
     } recover {
       case t: Throwable =>
         Logger.error("cannot retrieve recent locations", t)

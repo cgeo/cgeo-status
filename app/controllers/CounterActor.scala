@@ -10,7 +10,6 @@ class CounterActor extends Actor {
   private[this] var users: List[User] = Nil
 
   private[this] def trimOld() = {
-    // Updates from users are done every 15 minutes
     val trimTimestamp = System.currentTimeMillis() - updatePeriodMs
     users = users.dropWhile(_.timestamp < trimTimestamp)
   }
@@ -49,5 +48,6 @@ object CounterActor {
   case object GetAllUsers
   case object GetUserCountByKind
 
-  private val updatePeriodMs = 15 * 60 * 1000
+  // Updates from users are done every 30 minutes
+  private val updatePeriodMs = 30 * 60 * 1000
 }
