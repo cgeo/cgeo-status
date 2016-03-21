@@ -31,6 +31,9 @@ class CounterActor extends Actor {
       trimOld()
       users :+= user
 
+    case Reset =>
+      users = Nil
+
     case GetAllUsers(withCoordinates, limit) =>
       trimOld()
       val filtered = if (withCoordinates) users.filter(_.coords.isDefined) else users
@@ -57,6 +60,7 @@ object CounterActor {
   case class GetAllUsers(withCoordinates: Boolean, limit: Option[Int])
   case object GetUserCount
   case object GetUserCountByKind
+  case object Reset
 
   // Updates from users are done every 30 minutes
   private val updatePeriodMs = 30 * 60 * 1000

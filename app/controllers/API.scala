@@ -8,7 +8,7 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind}
+import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind, Reset}
 import controllers.geoip.GeoIPActor.UserInfo
 import controllers.geoip.GeoIPWebSocket
 import models._
@@ -37,10 +37,7 @@ class API @Inject() (database: Database, status: Status,
     val (kind, stat) = status.status(version_code, version_name)
     val locale = request.getQueryString("locale").getOrElse("")
     geoIPActor ! UserInfo(requestIP(request), locale, kind)
-    Counters.count(kind)
-    stat map { data =>
-      Ok(toJson(data))
-    } getOrElse Ok(toJson(Map("status" -> "up-to-date")))
+    Ok(stat.fold[JsValue](Json.obj("status" -> "up-to-date"))(toJson(_)))
   }
 
   private def checkKey(params: Map[String, Seq[String]])(body: Map[String, String] => Result) =
@@ -58,7 +55,7 @@ class API @Inject() (database: Database, status: Status,
                 versionName <- params.get("version_name"))
           yield {
             database.updateVersionFor(Version(k, versionName, versionCode.toInt))
-            Counters.reset(k)
+            counterActor ! Reset
             Ok("updated")
           }) getOrElse BadRequest("invalid parameters")
         case None =>
