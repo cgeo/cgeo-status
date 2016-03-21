@@ -6,7 +6,7 @@ import akka.stream.actor.ActorPublisherMessage.{Cancel, Request}
 import models.User
 import play.api.libs.json.{JsValue, Json}
 
-class GeoIPWebSocket(geoIPActor: ActorRef) extends ActorPublisher[JsValue] {
+class GeoIPWebSocket(geoIPActor: ActorRef) extends ActorPublisher[User] {
 
   override def preStart() = geoIPActor ! GeoIPActor.Register(self)
 
@@ -19,7 +19,7 @@ class GeoIPWebSocket(geoIPActor: ActorRef) extends ActorPublisher[JsValue] {
 
     case user: User =>
       if (totalDemand > 0)
-        onNext(user.toJson)
+        onNext(user)
   }
 
 }

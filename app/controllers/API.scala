@@ -8,11 +8,11 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import com.google.inject.name.Named
+import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind}
 import controllers.geoip.GeoIPActor.UserInfo
 import controllers.geoip.GeoIPWebSocket
-import CounterActor.{GetAllUsers, GetUserCountByKind}
 import models._
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json._
 import play.api.libs.json._
@@ -109,22 +109,13 @@ class API @Inject() (database: Database, status: Status,
             kind.name -> Json.obj("count" -> count)
         }
       }))
-    } recover {
-      case t: Throwable =>
-        Logger.error("cannot retrieve count by kind", t)
-        InternalServerError("unable to retrieve count by kind")
     }
   }
 
   def recentLocations = Action.async { request =>
     val limit = request.queryString.get("limit").map(_.head.toInt)
-    counterActor.ask(GetAllUsers)(counterTimeout).mapTo[List[User]].map { users =>
-      val limited = limit.fold(users)(users.takeRight)
-      Ok(JsArray(limited.collect { case user if user.coords.isDefined => user.toJson }))
-    } recover {
-      case t: Throwable =>
-        Logger.error("cannot retrieve recent locations", t)
-        InternalServerError("unable to retrieve recent locations")
+    counterActor.ask(GetAllUsers(true, limit))(counterTimeout).mapTo[List[User]].map { users =>
+      Ok(JsArray(users.map(_.toJson)))
     }
   }
 
@@ -132,10 +123,19 @@ class API @Inject() (database: Database, status: Status,
   private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
 
   def locations = WebSocket.accept[JsValue, JsValue] { request =>
-    // Group positions together, in 5 batches if backpressured, then drop the whole buffer if the client cannot accommodate the rate
-    val source = Source.actorPublisher[JsValue](Props(new GeoIPWebSocket(geoIPActor)))
+    val limit = request.queryString.get("initial").map(_.head.toInt)
+    // Start with the list of current users, then group positions together.
+    // The total number of users will also be added with every message.
+    // 5 batches are queued if backpressured by the websocket, then the whole
+    // buffer is dropped as the client obviously cannot keep up.
+    val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(geoIPActor)))
       .groupedWithin(maxBatchSize, maxBatchInterval)
-      .map(g => Json.obj("clients" -> g))
+      .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(true, limit))(counterTimeout).mapTo[List[User]]))
+      .mapAsync(1) { g =>
+        counterActor.ask(GetUserCount)(counterTimeout).mapTo[Long].map { count =>
+          Json.obj("clients" -> g.map(_.toJson), "active" -> count)
+        }
+      }
       .buffer(5, OverflowStrategy.dropBuffer)
     Flow.fromSinkAndSource(Sink.ignore, source)
   }

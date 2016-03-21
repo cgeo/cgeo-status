@@ -14,12 +14,15 @@ class CounterActor extends Actor {
     users = users.dropWhile(_.timestamp < trimTimestamp)
   }
 
-  private[this] def adjust[T](data: Map[T, Long]): Map[T, Long] = {
-    val factor = users.headOption.fold(1.0) { oldest =>
+  private[this] def factor: Double =
+    users.headOption.fold(1.0) { oldest =>
       val range = System.currentTimeMillis() - oldest.timestamp
       if (range <= 0) 1.0 else updatePeriodMs.toDouble / range
     }
-    data.mapValues(count => (count * factor).round)
+
+  private[this] def adjust[T](data: Map[T, Long]): Map[T, Long] = {
+    val f = factor
+    data.mapValues(count => (count * f).round)
   }
 
   def receive = {
@@ -28,9 +31,14 @@ class CounterActor extends Actor {
       trimOld()
       users :+= user
 
-    case GetAllUsers =>
+    case GetAllUsers(withCoordinates, limit) =>
       trimOld()
-      sender ! users
+      val filtered = if (withCoordinates) users.filter(_.coords.isDefined) else users
+      sender ! limit.fold(filtered)(filtered.takeRight)
+
+    case GetUserCount =>
+      trimOld()
+      sender ! (users.size * factor).round
 
     case GetUserCountByKind =>
       trimOld()
@@ -45,7 +53,8 @@ class CounterActor extends Actor {
 
 object CounterActor {
 
-  case object GetAllUsers
+  case class GetAllUsers(withCoordinates: Boolean, limit: Option[Int])
+  case object GetUserCount
   case object GetUserCountByKind
 
   // Updates from users are done every 30 minutes
