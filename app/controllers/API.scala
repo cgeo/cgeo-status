@@ -122,7 +122,7 @@ class API @Inject() (database: Database, status: Status,
 
   def recentLocations = Action.async { request =>
     val limit = request.queryString.get("limit").map(_.head.toInt)
-    counterActor.ask(GetAllUsers(true, limit))(counterTimeout).mapTo[List[User]].map { users =>
+    counterActor.ask(GetAllUsers(withCoordinates = true, limit))(counterTimeout).mapTo[List[User]].map { users =>
       Ok(JsArray(users.map(_.toJson)))
     }
   }
