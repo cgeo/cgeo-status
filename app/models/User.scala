@@ -3,7 +3,7 @@ package models
 import com.sanoma.cda.geo.Point
 import play.api.libs.json.Json
 
-case class User(kind: BuildKind, locale: String, coords: Option[Point]) {
+case class User(kind: BuildKind, locale: String, coords: Option[Point], versionName: String, versionCode: Int, ip: String) {
 
   val timestamp = System.currentTimeMillis()
   lazy val toJson = {

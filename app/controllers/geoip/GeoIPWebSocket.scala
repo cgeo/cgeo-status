@@ -3,12 +3,12 @@ package controllers.geoip
 import akka.actor.ActorRef
 import akka.stream.actor.ActorPublisher
 import akka.stream.actor.ActorPublisherMessage.{Cancel, Request}
+import controllers.CounterActor
 import models.User
-import play.api.libs.json.{JsValue, Json}
 
-class GeoIPWebSocket(geoIPActor: ActorRef) extends ActorPublisher[User] {
+class GeoIPWebSocket(counterActor: ActorRef) extends ActorPublisher[User] {
 
-  override def preStart() = geoIPActor ! GeoIPActor.Register(self)
+  override def preStart() = counterActor ! CounterActor.Register(self)
 
   def receive = {
 

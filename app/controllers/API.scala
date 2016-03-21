@@ -9,7 +9,6 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind, Reset}
-import controllers.geoip.GeoIPActor.UserInfo
 import controllers.geoip.GeoIPWebSocket
 import models._
 import play.api.Configuration
@@ -21,7 +20,6 @@ import play.api.mvc._
 import scala.concurrent.duration._
 
 class API @Inject() (database: Database, status: Status,
-                     @Named("geoip-actor") geoIPActor: ActorRef,
                      @Named("counter-actor") counterActor: ActorRef,
                      config: Configuration) extends Controller {
 
@@ -30,13 +28,11 @@ class API @Inject() (database: Database, status: Status,
   private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
   private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
 
-  private[this] def requestIP(request: Request[AnyContent]): String =
-    request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
-
   def getStatus(version_code: Int, version_name: String) = Action { request =>
     val (kind, stat) = status.status(version_code, version_name)
     val locale = request.getQueryString("locale").getOrElse("")
-    geoIPActor ! UserInfo(requestIP(request), locale, kind)
+    val ip = request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
+    counterActor ! User(kind, locale, None, version_name, version_code, ip)
     Ok(stat.fold[JsValue](Json.obj("status" -> "up-to-date"))(toJson(_)))
   }
 
@@ -137,7 +133,7 @@ class API @Inject() (database: Database, status: Status,
     // The total number of users will also be added with every message.
     // 5 batches are queued if backpressured by the websocket, then the whole
     // buffer is dropped as the client obviously cannot keep up.
-    val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(geoIPActor)))
+    val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(counterActor)))
       .groupedWithin(maxBatchSize, maxBatchInterval)
       .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, limit = initial))(counterTimeout).mapTo[List[User]]))
       .mapAsync(1) { g =>
