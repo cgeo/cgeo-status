@@ -27,6 +27,8 @@ class API @Inject() (database: Database, status: Status,
 
   private[this] val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
   private[this] val counterTimeout = Duration(config.getMilliseconds("count-request-timeout").get, TimeUnit.MILLISECONDS)
+  private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
+  private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
 
   private[this] def requestIP(request: Request[AnyContent]): String =
     request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
@@ -119,18 +121,15 @@ class API @Inject() (database: Database, status: Status,
     }
   }
 
-  private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
-  private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
-
   def locations = WebSocket.accept[JsValue, JsValue] { request =>
-    val limit = request.queryString.get("initial").map(_.head.toInt)
+    val initial = request.queryString.get("initial").map(_.head.toInt)
     // Start with the list of current users, then group positions together.
     // The total number of users will also be added with every message.
     // 5 batches are queued if backpressured by the websocket, then the whole
     // buffer is dropped as the client obviously cannot keep up.
     val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(geoIPActor)))
       .groupedWithin(maxBatchSize, maxBatchInterval)
-      .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(true, limit))(counterTimeout).mapTo[List[User]]))
+      .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, limit = initial))(counterTimeout).mapTo[List[User]]))
       .mapAsync(1) { g =>
         counterActor.ask(GetUserCount)(counterTimeout).mapTo[Long].map { count =>
           Json.obj("clients" -> g.map(_.toJson), "active" -> count)
