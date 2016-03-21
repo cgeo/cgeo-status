@@ -45,7 +45,7 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       // the user with an unknown location.
       pipe(geoIPActor.ask(user)(geoIPTimeout).mapTo[User].map(WithGeoIP).recover {
         case t: Throwable =>
-          Logger.error("cannot resolve geoip", t)
+          Logger.error(s"cannot resolve geoip for ${user.ip}", t)
           WithGeoIP(user)
       }).to(self)
 
