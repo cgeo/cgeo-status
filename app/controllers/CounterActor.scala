@@ -45,7 +45,8 @@ class CounterActor extends Actor {
       var userCount: Map[BuildKind, Long] = BuildKind.kinds.map(_ -> 0L).toMap
       for (user <- users)
         userCount += user.kind -> (userCount(user.kind) + 1)
-      sender ! adjust(userCount)
+      val adjusted = adjust(userCount)
+      sender ! BuildKind.kinds.map(k => k -> adjusted(k))
 
   }
 

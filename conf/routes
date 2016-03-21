@@ -19,6 +19,9 @@ POST	/api/update/:kind	    controllers.API.update(kind: String)
 # Delete message
 DELETE  /api/update/message         controllers.API.deleteMessage(key: String)
 
+# Get message
+GET     /api/message            controllers.API.message
+
 # Delete release information
 DELETE  /api/update/:kind           controllers.API.delete(kind: String, key: String)
 

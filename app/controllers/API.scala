@@ -101,16 +101,23 @@ class API @Inject() (database: Database, status: Status,
       Forbidden
   }
 
+  def message = Action { request =>
+    Ok(database.getMessage.fold(Json.obj("status" -> "no-message"))(message => Json.obj("status" -> "ok", "message" -> message)))
+  }
+
   def countByKind = Action.async {
-    counterActor.ask(GetUserCountByKind)(counterTimeout).mapTo[Map[BuildKind, Long]].map { counters =>
-      Ok(JsObject(counters.map { case (kind, count) =>
-        database.latestVersionFor(kind) match {
-          case Some(version) if version.code != 0 =>
-            kind.name -> Json.obj("count" -> count, "versionCode" -> version.code, "versionName" -> version.name)
-          case _ =>
-            kind.name -> Json.obj("count" -> count)
-        }
-      }))
+    counterActor.ask(GetUserCountByKind)(counterTimeout).mapTo[Seq[(BuildKind, Long)]].map { counters =>
+      val significant = counters.flatMap { case (kind, count) =>
+          database.latestVersionFor(kind) match {
+            case Some(version) if version.code != 0 =>
+              List(Json.obj("name" -> kind.name, "count" -> count, "versionCode" -> version.code, "versionName" -> version.name))
+            case _ if count > 0 =>
+              List(Json.obj("name" -> kind.name, "count" -> count))
+            case _ =>
+              Nil
+          }
+      }
+      Ok(JsArray(significant))
     }
   }
 
