@@ -108,14 +108,20 @@ class API @Inject() (database: Database, status: Status,
   def countByKind = Action.async {
     counterActor.ask(GetUserCountByKind)(counterTimeout).mapTo[Seq[(BuildKind, Long)]].map { counters =>
       val significant = counters.flatMap { case (kind, count) =>
-          database.latestVersionFor(kind) match {
+          val result = database.latestVersionFor(kind) match {
             case Some(version) if version.code != 0 =>
-              List(Json.obj("name" -> kind.name, "count" -> count, "versionCode" -> version.code, "versionName" -> version.name))
+              Some(Json.obj("versionCode" -> version.code, "versionName" -> version.name))
             case _ if count > 0 =>
-              List(Json.obj("name" -> kind.name, "count" -> count))
+              Some(Json.obj())
             case _ =>
-              Nil
+              None
           }
+        result.map(_ ++ Json.obj("name" -> kind.name, "count" -> count)).map { obj =>
+          kind.url match {
+            case Some(url) => obj ++ Json.obj("url" -> url)
+            case None => obj
+          }
+        }
       }
       Ok(JsArray(significant))
     }
