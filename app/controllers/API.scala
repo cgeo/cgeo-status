@@ -139,7 +139,7 @@ class API @Inject() (database: Database, status: Status,
         .mapTo[List[User]]))
       .mapAsync(1) { g =>
         counterActor.ask(GetUserCount)(counterTimeout).mapTo[(Long, Long)].map { case (active, withCoordinates) =>
-          Json.obj("clients" -> g.map(_.toJson), "active" -> active, "located" -> withCoordinates)
+          Json.obj("clients" -> g.map(_.toJson), "active" -> active, "located" -> withCoordinates, "timestamp" -> System.currentTimeMillis())
         }
       }
       .buffer(5, OverflowStrategy.dropBuffer)
