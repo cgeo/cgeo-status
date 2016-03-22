@@ -20,11 +20,14 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
   private[this] val geoIPTimeout: Timeout = Duration(config.getMilliseconds("geoip.resolution-timeout").get, TimeUnit.MILLISECONDS)
   private[this] var users: List[User] = Nil
   private[this] var clients: Set[ActorRef] = Set()
+  private[this] var usersWithCoordinates: Long = 0
   private[this] var resetGeneration: Int = 0
 
   private[this] def trimOld() = {
     val trimTimestamp = System.currentTimeMillis() - updatePeriodMs
-    users = users.dropWhile(_.timestamp < trimTimestamp)
+    val trimmed = users.takeWhile(_.timestamp < trimTimestamp)
+    usersWithCoordinates -= trimmed.count(_.coords.isDefined)
+    users = users.drop(trimmed.size)
   }
 
   private[this] def factor: Double =
@@ -62,8 +65,10 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       // of version the client is using.
       val currentUser = if (generation == resetGeneration) user else refreshKind(user)
       users :+= currentUser
-      if (currentUser.coords.isDefined)
+      if (currentUser.coords.isDefined) {
+        usersWithCoordinates += 1
         clients.foreach(_ ! currentUser)
+      }
 
     case Reset =>
       // Recompute the build kind used by the users, as the database has just been
@@ -82,16 +87,16 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       // A websocket has been closed
       clients -= actorRef
 
-    case GetAllUsers(withCoordinates, limit) =>
+    case GetAllUsers(withCoordinates, limit, timestamp) =>
       // Retrieve all users
       trimOld()
       val filtered = if (withCoordinates) users.filter(_.coords.isDefined) else users
-      sender ! limit.fold(filtered)(filtered.takeRight)
+      sender ! filtered.takeRight(limit).dropWhile(_.timestamp <= timestamp)
 
     case GetUserCount =>
       // Count users
       trimOld()
-      sender ! (users.size * factor).round
+      sender ! ((users.size * factor).round, (usersWithCoordinates * factor).round)
 
     case GetUserCountByKind =>
       // Sort users by version kind. This could be enhanced to include more statistics,
@@ -110,7 +115,7 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
 object CounterActor {
 
   case class Register(actorRef: ActorRef)
-  case class GetAllUsers(withCoordinates: Boolean, limit: Option[Int])
+  case class GetAllUsers(withCoordinates: Boolean, limit: Int, timestamp: Long)
   case object GetUserCount
   case object GetUserCountByKind
   case object Reset

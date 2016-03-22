@@ -11,7 +11,7 @@ import com.google.inject.name.Named
 import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind, Reset}
 import controllers.geoip.GeoIPWebSocket
 import models._
-import play.api.Configuration
+import play.api.{Configuration, Logger}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json._
 import play.api.libs.json._
@@ -120,25 +120,26 @@ class API @Inject() (database: Database, status: Status,
     }
   }
 
-  def recentLocations = Action.async { request =>
-    val limit = request.queryString.get("limit").map(_.head.toInt)
-    counterActor.ask(GetAllUsers(withCoordinates = true, limit))(counterTimeout).mapTo[List[User]].map { users =>
+  def recentLocations(limit: Int, timestamp: Long) = Action.async { request =>
+    Logger.info(s"limit = $limit, timestamp = $timestamp")
+    counterActor.ask(GetAllUsers(withCoordinates = true, limit, timestamp))(counterTimeout).mapTo[List[User]].map { users =>
       Ok(JsArray(users.map(_.toJson)))
     }
   }
 
-  def locations = WebSocket.accept[JsValue, JsValue] { request =>
-    val initial = request.queryString.get("initial").map(_.head.toInt)
+  def locations(initial: Int, timestamp: Long) = WebSocket.accept[JsValue, JsValue] { request =>
     // Start with the list of current users, then group positions together.
     // The total number of users will also be added with every message.
     // 5 batches are queued if backpressured by the websocket, then the whole
     // buffer is dropped as the client obviously cannot keep up.
+    Logger.info(s"initial = $initial, timestamp = $timestamp")
     val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(counterActor)))
       .groupedWithin(maxBatchSize, maxBatchInterval)
-      .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, limit = initial))(counterTimeout).mapTo[List[User]]))
+      .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, initial, timestamp))(counterTimeout)
+        .mapTo[List[User]]))
       .mapAsync(1) { g =>
-        counterActor.ask(GetUserCount)(counterTimeout).mapTo[Long].map { count =>
-          Json.obj("clients" -> g.map(_.toJson), "active" -> count)
+        counterActor.ask(GetUserCount)(counterTimeout).mapTo[(Long, Long)].map { case (active, withCoordinates) =>
+          Json.obj("clients" -> g.map(_.toJson), "active" -> active, "located" -> withCoordinates)
         }
       }
       .buffer(5, OverflowStrategy.dropBuffer)
