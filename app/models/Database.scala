@@ -2,7 +2,7 @@ package models
 
 import com.google.inject.ImplementedBy
 
-@ImplementedBy(classOf[CasbahDB])
+@ImplementedBy(classOf[PostgreSQLDB])
 trait Database {
 
   def updateVersionFor(version: Version): Unit
