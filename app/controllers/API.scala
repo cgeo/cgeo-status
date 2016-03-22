@@ -11,7 +11,7 @@ import com.google.inject.name.Named
 import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind, Reset}
 import controllers.geoip.GeoIPWebSocket
 import models._
-import play.api.{Configuration, Logger}
+import play.api.Configuration
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json._
 import play.api.libs.json._
@@ -121,7 +121,6 @@ class API @Inject() (database: Database, status: Status,
   }
 
   def recentLocations(limit: Int, timestamp: Long) = Action.async { request =>
-    Logger.info(s"limit = $limit, timestamp = $timestamp")
     counterActor.ask(GetAllUsers(withCoordinates = true, limit, timestamp))(counterTimeout).mapTo[List[User]].map { users =>
       Ok(JsArray(users.map(_.toJson)))
     }
@@ -132,7 +131,6 @@ class API @Inject() (database: Database, status: Status,
     // The total number of users will also be added with every message.
     // 5 batches are queued if backpressured by the websocket, then the whole
     // buffer is dropped as the client obviously cannot keep up.
-    Logger.info(s"initial = $initial, timestamp = $timestamp")
     val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(counterActor)))
       .groupedWithin(maxBatchSize, maxBatchInterval)
       .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, initial, timestamp))(counterTimeout)
