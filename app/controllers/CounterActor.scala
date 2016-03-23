@@ -18,6 +18,7 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
 
   private[this] implicit val dispatcher = context.system.dispatcher
   private[this] val geoIPTimeout: Timeout = Duration(config.getMilliseconds("geoip.resolution-timeout").get, TimeUnit.MILLISECONDS)
+  private[this] val maxWebSockets = config.getInt("max-websockets").get
   private[this] var users: List[User] = Nil
   private[this] var clients: Set[ActorRef] = Set()
   private[this] var usersWithCoordinates: Long = 0
@@ -82,6 +83,14 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       // Register a websocket client and watch it to remove it when the websocket is closed.
       clients += actorRef
       context.watch(actorRef)
+      // If we have too many websockets alive, close the oldest one gracefully in order to
+      // cycle through the requests.
+      if (clients.size > maxWebSockets) {
+        val toClose = clients.head
+        context.unwatch(toClose)
+        context.stop(toClose)
+        clients = clients.tail
+      }
 
     case Terminated(actorRef) =>
       // A websocket has been closed
