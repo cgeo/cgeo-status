@@ -103,9 +103,9 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       sender ! filtered.takeRight(limit).dropWhile(_.timestamp <= timestamp)
 
     case GetUserCount =>
-      // Count users
+      // Count users, users with coordinates and websocket clients
       trimOld()
-      sender ! ((users.size * factor).round, (usersWithCoordinates * factor).round)
+      sender ! ((users.size * factor).round, (usersWithCoordinates * factor).round, clients.size)
 
     case GetUserCountByKind =>
       // Sort users by version kind. This could be enhanced to include more statistics,

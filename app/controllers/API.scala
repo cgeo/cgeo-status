@@ -136,8 +136,9 @@ class API @Inject() (database: Database, status: Status,
       .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, initial, timestamp))(counterTimeout)
         .mapTo[List[User]]))
       .mapAsync(1) { g =>
-        counterActor.ask(GetUserCount)(counterTimeout).mapTo[(Long, Long)].map { case (active, withCoordinates) =>
-          Json.obj("clients" -> g.map(_.toJson), "active" -> active, "located" -> withCoordinates, "timestamp" -> System.currentTimeMillis())
+        counterActor.ask(GetUserCount)(counterTimeout).mapTo[(Long, Long, Int)].map { case (active, withCoordinates, watchers) =>
+          Json.obj("clients" -> g.map(_.toJson), "active" -> active, "located" -> withCoordinates,
+            "watchers" -> watchers, "timestamp" -> System.currentTimeMillis())
         }
       }
       .buffer(5, OverflowStrategy.dropBuffer)
