@@ -32,14 +32,14 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
   }
 
   private[this] def factor: Double =
-    users.headOption.fold(1.0) { oldest =>
+    users.headOption.fold(1.0) { oldest ⇒
       val range = System.currentTimeMillis() - oldest.timestamp
       if (range <= 0) 1.0 else updatePeriodMs.toDouble / range
     }
 
   private[this] def adjust[T](data: Map[T, Long]): Map[T, Long] = {
     val f = factor
-    data.mapValues(count => (count * f).round)
+    data.mapValues(count ⇒ (count * f).round)
   }
 
   private[this] def refreshKind(user: User): User =
@@ -47,18 +47,18 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
 
   def receive = {
 
-    case user: User =>
+    case user: User ⇒
       // Try to add GeoIP information before adding this user to the users count.
       // If the GeoIP information is not available in a reasonable time, register
       // the user with an unknown location.
       val generation = resetGeneration
       pipe(geoIPActor.ask(user)(geoIPTimeout).mapTo[User].map(WithGeoIP(_, generation)).recover {
-        case t: Throwable =>
+        case t: Throwable ⇒
           Logger.error(s"cannot resolve geoip for ${user.ip}", t)
           WithGeoIP(user, generation)
       }).to(self)
 
-    case WithGeoIP(user, generation) =>
+    case WithGeoIP(user, generation) ⇒
       // GeoIP received (possibly empty), send it to registered websocket clients
       // if we have some.
       trimOld()
@@ -71,7 +71,7 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
         clients.foreach(_ ! currentUser)
       }
 
-    case Reset =>
+    case Reset ⇒
       // Recompute the build kind used by the users, as the database has just been
       // updated. We increment the reset generation counter so that clients whose
       // geoip is being resolved will be requalified when they are added.
@@ -79,7 +79,7 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       resetGeneration += 1
       users = users.map(refreshKind)
 
-    case Register(actorRef) =>
+    case Register(actorRef) ⇒
       // Register a websocket client and watch it to remove it when the websocket is closed.
       clients += actorRef
       context.watch(actorRef)
@@ -92,30 +92,30 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
         clients = clients.tail
       }
 
-    case Terminated(actorRef) =>
+    case Terminated(actorRef) ⇒
       // A websocket has been closed
       clients -= actorRef
 
-    case GetAllUsers(withCoordinates, limit, timestamp) =>
+    case GetAllUsers(withCoordinates, limit, timestamp) ⇒
       // Retrieve all users
       trimOld()
       val filtered = if (withCoordinates) users.filter(_.coords.isDefined) else users
       sender ! filtered.takeRight(limit).dropWhile(_.timestamp <= timestamp)
 
-    case GetUserCount =>
+    case GetUserCount ⇒
       // Count users, users with coordinates and websocket clients
       trimOld()
       sender ! ((users.size * factor).round, (usersWithCoordinates * factor).round, clients.size)
 
-    case GetUserCountByKind =>
+    case GetUserCountByKind ⇒
       // Sort users by version kind. This could be enhanced to include more statistics,
       // for example the language used in the application.
       trimOld()
-      var userCount: Map[BuildKind, Long] = BuildKind.kinds.map(_ -> 0L).toMap
-      for (user <- users)
-        userCount += user.kind -> (userCount(user.kind) + 1)
+      var userCount: Map[BuildKind, Long] = BuildKind.kinds.map(_ → 0L).toMap
+      for (user ← users)
+        userCount += user.kind → (userCount(user.kind) + 1)
       val adjusted = adjust(userCount)
-      sender ! BuildKind.kinds.map(k => k -> adjusted(k))
+      sender ! BuildKind.kinds.map(k ⇒ k → adjusted(k))
 
   }
 

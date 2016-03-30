@@ -19,44 +19,44 @@ class CasbahDB extends Database {
     Message(obj.getAs[String]("message").get, obj.getAs[String]("message_id"), obj.getAs[String]("icon"), obj.getAs[String]("url"))
 
   private var buildVersions: Map[BuildKind, Version] =
-    BuildKind.kinds.flatMap(key => statusColl.findOne(MongoDBObject("kind" -> key.name)).map(key -> toVersion(_))).toMap
+    BuildKind.kinds.flatMap(key ⇒ statusColl.findOne(MongoDBObject("kind" → key.name)).map(key → toVersion(_))).toMap
 
-  private var message: Option[Message] = statusColl.findOne(MongoDBObject("kind" -> "message")).map(toMessage)
+  private var message: Option[Message] = statusColl.findOne(MongoDBObject("kind" → "message")).map(toMessage)
 
   private def versionFor(kind: BuildKind) = {
-    val obj = MongoDBObject("kind" -> kind.name)
+    val obj = MongoDBObject("kind" → kind.name)
     statusColl.findOne(obj) getOrElse obj
   }
 
   def updateVersionFor(version: Version) {
-    buildVersions += version.kind -> version
-    statusColl += versionFor(version.kind) + ("code" -> version.code) + ("name" -> version.name)
+    buildVersions += version.kind → version
+    statusColl += versionFor(version.kind) + ("code" → version.code) + ("name" → version.name)
     version.kind match {
-      case Release =>
+      case Release ⇒
         // When we setup a new release, the release candidate and deployment should be cleared
         deleteKind(ReleaseCandidate)
         deleteKind(Deployment)
-      case Deployment =>
+      case Deployment ⇒
         // When we setup a deployment version, the release candidate should be cleared
         deleteKind(ReleaseCandidate)
-      case ReleaseCandidate =>
+      case ReleaseCandidate ⇒
         // If we are creating a new release candidate because of an issue in deployment, we should clear the deployment version
         deleteKind(Deployment)
-      case _ =>
+      case _ ⇒
       // Nothing more to do
     }
   }
 
-  def updateMessage(newMessage : Message): Unit = {
+  def updateMessage(newMessage: Message): Unit = {
     val builder = DBObject.newBuilder
-    builder += "kind" -> "message"
-    builder += "message" -> newMessage.message
-    newMessage.message_id foreach { builder += "message_id" -> _ }
-    newMessage.icon foreach { builder += "icon" -> _ }
-    newMessage.url foreach { builder += "url" -> _ }
-    statusColl.findOne(MongoDBObject("kind" -> "message")) match {
-      case Some(obj) => builder += "_id" -> obj("_id")
-      case None      =>
+    builder += "kind" → "message"
+    builder += "message" → newMessage.message
+    newMessage.message_id foreach { builder += "message_id" → _ }
+    newMessage.icon foreach { builder += "icon" → _ }
+    newMessage.url foreach { builder += "url" → _ }
+    statusColl.findOne(MongoDBObject("kind" → "message")) match {
+      case Some(obj) ⇒ builder += "_id" → obj("_id")
+      case None      ⇒
     }
     statusColl += builder.result()
     message = Some(newMessage)
@@ -66,12 +66,12 @@ class CasbahDB extends Database {
 
   def deleteKind(kind: BuildKind): Unit = {
     buildVersions -= kind
-    statusColl -= MongoDBObject("kind" -> kind.name)
+    statusColl -= MongoDBObject("kind" → kind.name)
   }
 
   def deleteMessage(): Unit = {
     message = None
-    statusColl -= MongoDBObject("kind" -> "message")
+    statusColl -= MongoDBObject("kind" → "message")
   }
 
   private def unnamedVersion(kind: BuildKind): Version = Version(kind, "", 0)

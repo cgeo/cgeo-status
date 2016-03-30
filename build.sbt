@@ -1,5 +1,18 @@
+import scalariform.formatter.preferences._
+import com.typesafe.sbt.SbtScalariform
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+
+SbtScalariform.scalariformSettings
+
 lazy val commonSettings = Seq(
-  scalaVersion := "2.11.8"
+  scalaVersion := "2.11.8",
+  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+    .setPreference(AlignArguments, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(RewriteArrowSymbols, true)
+    .setPreference(SpacesWithinPatternBinders, false)
+    .setPreference(SpacesAroundMultiImports, false)
 )
 
 lazy val cgeoStatus = (project in file(".")).enablePlugins(PlayScala).settings(commonSettings: _*).settings(

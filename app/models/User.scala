@@ -8,7 +8,7 @@ case class User(kind: BuildKind, locale: String, coords: Option[Point], versionN
   val timestamp = System.currentTimeMillis()
 
   lazy val toJson = {
-    val base = Json.obj("kind" -> kind.name)
-    coords.fold(base)(p => base ++ Json.obj("latitude" -> p.latitude, "longitude" -> p.longitude))
+    val base = Json.obj("kind" → kind.name)
+    coords.fold(base)(p ⇒ base ++ Json.obj("latitude" → p.latitude, "longitude" → p.longitude))
   }
 }

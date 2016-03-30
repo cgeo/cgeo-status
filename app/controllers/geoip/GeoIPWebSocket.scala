@@ -12,12 +12,12 @@ class GeoIPWebSocket(counterActor: ActorRef) extends ActorPublisher[User] {
 
   def receive = {
 
-    case Request(_) =>
+    case Request(_) ⇒
 
-    case Cancel =>
+    case Cancel ⇒
       context.stop(self)
 
-    case user: User =>
+    case user: User ⇒
       if (totalDemand > 0)
         onNext(user)
   }

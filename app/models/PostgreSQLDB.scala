@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.google.inject.Singleton
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
-import slick.driver.PostgresDriver.api.{Database => D, _}
+import slick.driver.PostgresDriver.api.{Database ⇒ D, _}
 import slick.lifted.{TableQuery, Tag}
 
 @Singleton
@@ -17,10 +17,11 @@ class PostgreSQLDB extends Database {
     def name: Rep[String] = column[String]("name", O.PrimaryKey)
     def versionName = column[String]("version_name")
     def versionCode = column[Int]("version_code")
-    def * = (name, versionName, versionCode).shaped <> ( { case (name, versionName, versionCode) =>
+    def * = (name, versionName, versionCode).shaped <> ({
+      case (name, versionName, versionCode) ⇒
         Version(BuildKind.fromName(name), versionName, versionCode)
-      }, { version: Version =>
-        Some((version.kind.name, version.name, version.code))
+    }, { version: Version ⇒
+      Some((version.kind.name, version.name, version.code))
     })
   }
   val versions = TableQuery[Versions]
@@ -28,12 +29,12 @@ class PostgreSQLDB extends Database {
   private[this] var currentVersions: AtomicReference[Map[BuildKind, Version]] = new AtomicReference(Map())
 
   def loadVersions() =
-    db.run(versions.result).foreach(versions => currentVersions.set(versions.map(v => v.kind -> v).toMap))
+    db.run(versions.result).foreach(versions ⇒ currentVersions.set(versions.map(v ⇒ v.kind → v).toMap))
 
   private[this] var currentMessage: AtomicReference[Option[Message]] = new AtomicReference(None)
 
   def loadMessage() =
-    db.run(messages.result.headOption).foreach(message => currentMessage.set(message))
+    db.run(messages.result.headOption).foreach(message ⇒ currentMessage.set(message))
 
   class Messages(tag: Tag) extends Table[Message](tag, "messages") {
     def message = column[String]("message", O.PrimaryKey)
@@ -46,7 +47,7 @@ class PostgreSQLDB extends Database {
 
   override def updateVersionFor(version: Version) = {
     db.run(versions.insertOrUpdate(version))
-    currentVersions.set(currentVersions.get + (version.kind -> version))
+    currentVersions.set(currentVersions.get + (version.kind → version))
   }
 
   override def latestVersionFor(kind: BuildKind) = currentVersions.get.get(kind)
@@ -59,7 +60,7 @@ class PostgreSQLDB extends Database {
   override def getMessage = currentMessage.get
 
   override def updateMessage(message: Message) = {
-    db.run(messages.delete).foreach(_ => db.run(messages += message))
+    db.run(messages.delete).foreach(_ ⇒ db.run(messages += message))
     currentMessage.set(Some(message))
   }
 
@@ -70,7 +71,7 @@ class PostgreSQLDB extends Database {
 
   // At startup, create databases if needed and load data
   db.run(DBIO.seq(messages.schema.create, versions.schema.create)).andThen {
-    case result =>
+    case result ⇒
       Logger.info(s"Result of DB creation: $result")
       loadMessage()
       loadVersions()

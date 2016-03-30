@@ -28,7 +28,7 @@ object OldNightlyBuild extends OldKind("old nightly", None)
 
 object BuildKind {
   val kinds: Seq[BuildKind] = Seq(Deployment, Release, Legacy, ReleaseCandidate, NightlyBuild, DeveloperBuild,
-                                  OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild)
+    OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild)
   val upToDateKinds = kinds.filter(!_.synthesized)
-  val fromName = upToDateKinds.map(kind => kind.name -> kind).toMap
+  val fromName = upToDateKinds.map(kind ⇒ kind.name → kind).toMap
 }

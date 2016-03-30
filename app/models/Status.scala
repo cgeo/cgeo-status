@@ -23,20 +23,26 @@ class Status @Inject() (database: Database) {
     } else
       DeveloperBuild
 
-  private val newRelease = Message("New release available.\nClick to install.",
+  private val newRelease = Message(
+    "New release available.\nClick to install.",
     Some("status_new_release"), Some("attribute_climbing"),
-    Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"))
+    Some("https://play.google.com/store/apps/details?id=cgeo.geocaching")
+  )
 
-  private val newRC = Message("New release candidate available.\nClick to install.",
-    Some("status_new_rc"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-RC.apk"))
+  private val newRC = Message(
+    "New release candidate available.\nClick to install.",
+    Some("status_new_rc"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-RC.apk")
+  )
 
-  private val newNightly = Message("New nightly build available.\nClick to install.",
-    Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk"))
+  private val newNightly = Message(
+    "New nightly build available.\nClick to install.",
+    Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk")
+  )
 
   def nothing = database.getMessage
 
   private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[Version]) =
-    reference exists { ref =>
+    reference exists { ref ⇒
       versionCode < ref.code ||
         (versionCode == ref.code && versionName < ref.name)
     }
@@ -45,31 +51,31 @@ class Status @Inject() (database: Database) {
     def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))
     kind(versionName) match {
-      case Release =>
+      case Release ⇒
         if (moreRecent(Release))
           (OldRelease, Some(newRelease))
         else
           (Release, nothing)
-      case Deployment =>
-          (Deployment, nothing)
-      case ReleaseCandidate =>
+      case Deployment ⇒
+        (Deployment, nothing)
+      case ReleaseCandidate ⇒
         if (moreRecent(Release))
           (OldReleaseCandidate, Some(newRelease))
         else if (moreRecent(ReleaseCandidate))
           (OldReleaseCandidate, Some(newRC))
         else
           (ReleaseCandidate, nothing)
-      case NightlyBuild =>
+      case NightlyBuild ⇒
         if (moreRecent(NightlyBuild))
           (OldNightlyBuild, Some(newNightly))
         else
           (NightlyBuild, nothing)
-      case Legacy =>
+      case Legacy ⇒
         if (moreRecent(Legacy))
           (OldLegacy, Some(newRelease))
         else
           (Legacy, nothing)
-      case DeveloperBuild =>
+      case DeveloperBuild ⇒
         (DeveloperBuild, nothing)
     }
   }

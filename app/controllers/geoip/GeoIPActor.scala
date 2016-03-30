@@ -19,9 +19,11 @@ import play.api.{Configuration, Logger}
 import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
-class GeoIPActor @Inject() (config: Configuration,
-                            ws: WSClient,
-                            @Named("counter-actor") counterActor: ActorRef) extends Actor {
+class GeoIPActor @Inject() (
+  config: Configuration,
+    ws: WSClient,
+    @Named("counter-actor") counterActor: ActorRef
+) extends Actor {
 
   import GeoIPActor._
 
@@ -39,18 +41,18 @@ class GeoIPActor @Inject() (config: Configuration,
     val existingFileName = config.getString("geoip.use-existing-file")
     if (existingFileName.isDefined) {
       Logger.warn("geoip.use-existing-file is defined, not downloading fresh database")
-      existingFileName.foreach(name => self ! GeoIPActor.UseGeoIPData(new File(name)))
+      existingFileName.foreach(name ⇒ self ! GeoIPActor.UseGeoIPData(new File(name)))
     } else
       self ! Download
   }
 
   def receive = {
 
-    case user: User =>
+    case user: User ⇒
       val coords = geoIP.flatMap(_.getLocation(user.ip)).flatMap(_.geoPoint)
       sender ! user.copy(coords = coords)
 
-    case UseGeoIPData(file) =>
+    case UseGeoIPData(file) ⇒
       try {
         val newGeoIP = MaxMindIpGeo(file.getAbsolutePath, config.getInt("geoip.cache-size").get)
         geoIPFile.foreach(removeFile)
@@ -58,18 +60,18 @@ class GeoIPActor @Inject() (config: Configuration,
         geoIPFile = Some(file)
         Logger.info("switch to new GeoIP file complete")
       } catch {
-        case t: Throwable => Logger.error("cannot use geoip file", t)
+        case t: Throwable ⇒ Logger.error("cannot use geoip file", t)
       }
 
-    case Download =>
+    case Download ⇒
       Logger.info("download fresh GeoIP data")
       val response = ws.url(url).withMethod("GET").stream()
-      val downloaded = response.flatMap { r =>
+      val downloaded = response.flatMap { r ⇒
         val file = new File(tempDir, s"geoip-data-${UUID.randomUUID}")
         val compressedFile = new File(file.getAbsolutePath + ".gz")
-        val compressedSink = StreamConverters.fromOutputStream(() => new FileOutputStream(compressedFile))
+        val compressedSink = StreamConverters.fromOutputStream(() ⇒ new FileOutputStream(compressedFile))
         r.body.runWith(compressedSink).andThen {
-          case Success(result) =>
+          case Success(result) ⇒
             Logger.debug("GeoIP download successful, will uncompress file")
             try {
               val compressedInput = new FileInputStream(compressedFile)
@@ -84,13 +86,13 @@ class GeoIPActor @Inject() (config: Configuration,
               self ! GeoIPActor.UseGeoIPData(file)
               context.system.scheduler.scheduleOnce(refreshDuration, self, Download)
             } catch {
-              case throwable: Throwable =>
+              case throwable: Throwable ⇒
                 Logger.error("unable to uncompress GeoIP file", throwable)
                 removeFile(file)
                 removeFile(compressedFile)
                 context.system.scheduler.scheduleOnce(retryDuration, self, Download)
             }
-          case Failure(throwable) =>
+          case Failure(throwable) ⇒
             Logger.error("unable to download GeoIP data, attempting to remove temporary file", throwable)
             removeFile(file)
             context.system.scheduler.scheduleOnce(retryDuration, self, Download)
@@ -111,7 +113,7 @@ object GeoIPActor {
       file.delete()
       Logger.debug(s"removed obsolete file $file")
     } catch {
-      case t: Throwable =>
+      case t: Throwable ⇒
         Logger.warn(s"cannot remove obsolete file $file", t)
     }
   }
