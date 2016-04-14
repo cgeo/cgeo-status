@@ -52,11 +52,11 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       // If the GeoIP information is not available in a reasonable time, register
       // the user with an unknown location.
       val generation = resetGeneration
-      pipe(geoIPActor.ask(user)(geoIPTimeout).mapTo[User].map(WithGeoIP(_, generation)).recover {
+      geoIPActor.ask(user)(geoIPTimeout).mapTo[User].map(WithGeoIP(_, generation)).recover {
         case t: Throwable ⇒
           Logger.error(s"cannot resolve geoip for ${user.ip}", t)
           WithGeoIP(user, generation)
-      }).to(self)
+      } pipeTo self
 
     case WithGeoIP(user, generation) ⇒
       // GeoIP received (possibly empty), send it to registered websocket clients
