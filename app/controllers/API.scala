@@ -52,6 +52,20 @@ class API @Inject() (database: Database, status: Status,
             versionName ← params.get("version_name")
           ) yield {
             database.updateVersionFor(Version(k, versionName, versionCode.toInt))
+            k match {
+              case Release ⇒
+                // When we setup a new release, the release candidate and deployment should be cleared
+                database.deleteKind(ReleaseCandidate)
+                database.deleteKind(Deployment)
+              case Deployment ⇒
+                // When we setup a deployment version, the release candidate should be cleared
+                database.deleteKind(ReleaseCandidate)
+              case ReleaseCandidate ⇒
+                // If we are creating a new release candidate because of an issue in deployment, we should clear the deployment version
+                database.deleteKind(Deployment)
+              case _ ⇒
+              // Nothing more to do
+            }
             counterActor ! Reset
             Ok("updated")
           }) getOrElse BadRequest("invalid parameters")
