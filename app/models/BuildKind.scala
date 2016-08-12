@@ -10,7 +10,9 @@ object Deployment extends UpToDateKind("deployment", Some("http://download.cgeo.
 
 object Legacy extends UpToDateKind("legacy", Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"))
 
-object ReleaseCandidate extends UpToDateKind("rc", Some("http://download.cgeo.org/cgeo-RC.apk"))
+object ReleaseCandidate extends UpToDateKind("rc", Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"))
+
+object ReleaseCandidateDeployment extends UpToDateKind("rc-deployment", Some("http://download.cgeo.org/cgeo-RC.apk"))
 
 object NightlyBuild extends UpToDateKind("nightly", Some("http://download.cgeo.org/cgeo-nightly.apk"))
 
@@ -27,7 +29,7 @@ object OldReleaseCandidate extends OldKind("old rc", None)
 object OldNightlyBuild extends OldKind("old nightly", None)
 
 object BuildKind {
-  val kinds: Seq[BuildKind] = Seq(Deployment, Release, Legacy, ReleaseCandidate, NightlyBuild, DeveloperBuild,
+  val kinds: Seq[BuildKind] = Seq(Deployment, Release, Legacy, ReleaseCandidateDeployment, ReleaseCandidate, NightlyBuild, DeveloperBuild,
     OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild)
   val upToDateKinds = kinds.filter(!_.synthesized)
   val fromName = upToDateKinds.map(kind ⇒ kind.name → kind).toMap

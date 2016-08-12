@@ -11,9 +11,12 @@ class Status @Inject() (database: Database) {
   def kind(versionName: String): UpToDateKind =
     if (versionName.endsWith("-legacy"))
       Legacy
-    else if (releaseCandidateRegex.findFirstIn(versionName).isDefined)
-      ReleaseCandidate
-    else if (nightlyBuildRegex.findFirstIn(versionName).isDefined)
+    else if (releaseCandidateRegex.findFirstIn(versionName).isDefined) {
+      if (database.latestVersionFor(ReleaseCandidateDeployment).exists(_.name == versionName))
+        ReleaseCandidateDeployment
+      else
+        ReleaseCandidate
+    } else if (nightlyBuildRegex.findFirstIn(versionName).isDefined)
       NightlyBuild
     else if (releaseRegex.findFirstIn(versionName).isDefined) {
       if (database.latestVersionFor(Deployment).exists(_.name == versionName))

@@ -54,14 +54,20 @@ class API @Inject() (database: Database, status: Status,
             database.updateVersionFor(Version(k, versionName, versionCode.toInt))
             k match {
               case Release ⇒
-                // When we setup a new release, the release candidate and deployment should be cleared
-                database.deleteKind(ReleaseCandidate)
+                // When we setup a new release, the release candidate and deployments should be cleared
                 database.deleteKind(Deployment)
-              case Deployment ⇒
-                // When we setup a deployment version, the release candidate should be cleared
                 database.deleteKind(ReleaseCandidate)
+                database.deleteKind(ReleaseCandidateDeployment)
+              case Deployment ⇒
+                // When we setup a deployment version, the release candidate and its deployment should be cleared
+                database.deleteKind(ReleaseCandidate)
+                database.deleteKind(ReleaseCandidateDeployment)
               case ReleaseCandidate ⇒
-                // If we are creating a new release candidate because of an issue in deployment, we should clear the deployment version
+                // If we are creating a new release candidate because of an issue in deployment, we should clear the deployments version
+                database.deleteKind(Deployment)
+                database.deleteKind(ReleaseCandidateDeployment)
+              case ReleaseCandidateDeployment ⇒
+                // If we are creating a new release candidate deployment, we should remove the deployment version, something must be wrong
                 database.deleteKind(Deployment)
               case _ ⇒
               // Nothing more to do
