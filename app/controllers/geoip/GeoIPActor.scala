@@ -20,7 +20,7 @@ import scala.concurrent.duration.Duration
 import scala.util.{Failure, Success}
 
 class GeoIPActor @Inject() (
-  config: Configuration,
+    config: Configuration,
     ws: WSClient,
     @Named("counter-actor") counterActor: ActorRef
 ) extends Actor {

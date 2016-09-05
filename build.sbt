@@ -20,7 +20,7 @@ lazy val cgeoStatus = (project in file(".")).enablePlugins(PlayScala).settings(c
   version := "1.1",
   libraryDependencies ++= Seq(filters, ws,
     "com.typesafe.slick" %% "slick" % "3.1.1",
-    "org.postgresql" % "postgresql" % "9.4.1208"),
+    "org.postgresql" % "postgresql" % "9.4.1209"),
   routesGenerator := InjectedRoutesGenerator
 ).dependsOn(root)
 
