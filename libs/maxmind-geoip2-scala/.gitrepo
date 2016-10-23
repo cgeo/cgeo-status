@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/Sanoma-CDA/maxmind-geoip2-scala.git
+	branch = master
+	commit = 4f950835d73cc9938114bed099d411c1dc153e2e
+	parent = a01563b1ae928d5c00e96709008f2fcaa8bc57f2
+	cmdver = 0.3.0
