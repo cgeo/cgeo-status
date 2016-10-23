@@ -18,11 +18,11 @@ lazy val commonSettings = Seq(
 lazy val cgeoStatus = (project in file(".")).enablePlugins(PlayScala).settings(commonSettings: _*).settings(
   name := "cgeo-status",
   version := "1.1",
+  scalaVersion := "2.11.8",
   libraryDependencies ++= Seq(filters, ws,
     "com.typesafe.slick" %% "slick" % "3.1.1",
     "org.postgresql" % "postgresql" % "9.4.1211"),
   routesGenerator := InjectedRoutesGenerator
-).dependsOn(root)
+).dependsOn(geoip2)
 
-// The subproject calls itself root
-lazy val root = (project in file("libs/maxmind-geoip2-scala")).settings(commonSettings: _*)
+lazy val geoip2 = RootProject(file("libs/maxmind-geoip2-scala"))
