@@ -1,3 +1,0 @@
-[submodule "libs/maxmind-geoip2-scala"]
-	path = libs/maxmind-geoip2-scala
-	url = https://github.com/Sanoma-CDA/maxmind-geoip2-scala.git
