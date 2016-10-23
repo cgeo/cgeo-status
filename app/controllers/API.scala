@@ -148,12 +148,12 @@ class API @Inject() (database: Database, status: Status,
     }
   }
 
-  def locations(initial: Int, timestamp: Long) = WebSocket.accept[JsValue, JsValue] { request ⇒
+  private def locationsSource(initial: Int, timestamp: Long): Source[JsObject, ActorRef] = {
     // Start with the list of current users, then group positions together.
     // The total number of users will also be added with every message.
     // 5 batches are queued if backpressured by the websocket, then the whole
     // buffer is dropped as the client obviously cannot keep up.
-    val source = Source.actorPublisher[User](Props(new GeoIPWebSocket(counterActor)))
+    Source.actorPublisher[User](Props(new GeoIPWebSocket(counterActor)))
       .groupedWithin(maxBatchSize, maxBatchInterval)
       .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, initial, timestamp))(counterTimeout)
         .mapTo[List[User]]))
@@ -165,7 +165,10 @@ class API @Inject() (database: Database, status: Status,
         }
       }
       .buffer(5, OverflowStrategy.dropBuffer)
-    Flow.fromSinkAndSource(Sink.ignore, source)
+  }
+
+  def locations(initial: Int, timestamp: Long) = WebSocket.accept[JsValue, JsValue] { request ⇒
+    Flow.fromSinkAndSource(Sink.ignore, locationsSource(initial, timestamp))
   }
 
 }
