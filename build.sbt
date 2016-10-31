@@ -25,4 +25,4 @@ lazy val cgeoStatus = (project in file(".")).enablePlugins(PlayScala).settings(c
   routesGenerator := InjectedRoutesGenerator
 ).dependsOn(geoip2)
 
-lazy val geoip2 = RootProject(file("libs/maxmind-geoip2-scala"))
+lazy val geoip2 = RootProject(file("external/maxmind-geoip2-scala"))
