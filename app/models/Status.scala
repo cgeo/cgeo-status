@@ -34,7 +34,7 @@ class Status @Inject() (database: Database) {
 
   private val newRC = Message(
     "New release candidate available.\nClick to install.",
-    Some("status_new_rc"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-RC.apk")
+    Some("status_new_rc"), Some("attribute_climbing"), Some("https://play.google.com/store/apps/details?id=cgeo.geocaching")
   )
 
   private val newNightly = Message(
