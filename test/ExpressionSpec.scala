@@ -37,9 +37,18 @@ class ExpressionSpec extends PlaySpec {
     }
 
     "compose boolean values" in {
+      checkFalse("false || false")
+      checkTrue("false || true")
       checkTrue("true || false")
+      checkTrue("true || true")
+      checkFalse("false && false")
+      checkFalse("false && true")
       checkFalse("true && false")
+      checkTrue("true && true")
+      checkFalse("false ^ false")
+      checkTrue("false ^ true")
       checkTrue("true ^ false")
+      checkFalse("true ^ true")
       checkTrue("!false")
       checkFalse("!true")
     }
@@ -51,6 +60,12 @@ class ExpressionSpec extends PlaySpec {
       checkFalse("(true ^ false) && false")
       checkFalse("true ^ !(false && false)")
       checkFalse("(true ^ false) && !true")
+    }
+
+    "accept presence or absence of whitespace" in {
+      checkTrue("1==1")
+      checkTrue("1 == 1")
+      checkTrue("1    ==     1")
     }
 
     "be able to compare versionCode" in {

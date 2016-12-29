@@ -70,8 +70,14 @@ object Expression extends RegexParsers {
   }
 
   private def bool_binop: Parser[Expression[Boolean]] = bool_term ~ ("&&" | "||" | "^") ~ bool ^^ {
-    case a ~ "&&" ~ b => new Binary(a, b, (_: Boolean) && (_: Boolean))
-    case a ~ "||" ~ b => new Binary(a, b, (_: Boolean) || (_: Boolean))
+    case a ~ "&&" ~ b => new Expression[Boolean] {
+      override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Boolean =
+        if (a.interpret(versionCode, versionName, kind)) b.interpret(versionCode, versionName, kind) else false
+    }
+    case a ~ "||" ~ b => new Expression[Boolean] {
+      override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Boolean =
+        if (a.interpret(versionCode, versionName, kind)) true else b.interpret(versionCode, versionName, kind)
+    }
     case a ~ "^" ~ b => new Binary(a, b, (_: Boolean) ^ (_: Boolean))
   }
 
