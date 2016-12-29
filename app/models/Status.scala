@@ -29,20 +29,26 @@ class Status @Inject() (database: Database) {
   private val newRelease = Message(
     "New release available.\nClick to install.",
     Some("status_new_release"), Some("attribute_climbing"),
-    Some("https://play.google.com/store/apps/details?id=cgeo.geocaching")
+    Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"),
+    None
   )
 
   private val newRC = Message(
     "New release candidate available.\nClick to install.",
-    Some("status_new_rc"), Some("attribute_climbing"), Some("https://play.google.com/store/apps/details?id=cgeo.geocaching")
+    Some("status_new_rc"), Some("attribute_climbing"), Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"),
+    None
   )
 
   private val newNightly = Message(
     "New nightly build available.\nClick to install.",
-    Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk")
+    Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk"),
+    None
   )
 
-  def nothing = database.getMessage
+  def defaultMessage(versionCode: Int, versionName: String, kind: BuildKind): Option[Message] = {
+    val msg = database.getMessage
+    msg.flatMap { m => if (m.conditionExpr.interpret(versionCode, versionName, kind)) msg else None }
+  }
 
   private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[Version]) =
     reference exists { ref ⇒
@@ -51,35 +57,37 @@ class Status @Inject() (database: Database) {
     }
 
   def status(versionCode: Int, versionName: String): (BuildKind, Option[Message]) = {
+    val buildKind = kind(versionName)
+    lazy val defaultMessageForVersion = defaultMessage(versionCode, versionName, buildKind)
     def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))
-    kind(versionName) match {
+     buildKind match {
       case Release ⇒
         if (moreRecent(Release))
           (OldRelease, Some(newRelease))
         else
-          (Release, nothing)
+          (Release, defaultMessageForVersion)
       case Deployment ⇒
-        (Deployment, nothing)
+        (Deployment, defaultMessageForVersion)
       case ReleaseCandidate ⇒
         if (moreRecent(Release))
           (OldReleaseCandidate, Some(newRelease))
         else if (moreRecent(ReleaseCandidate))
           (OldReleaseCandidate, Some(newRC))
         else
-          (ReleaseCandidate, nothing)
+          (ReleaseCandidate, defaultMessageForVersion)
       case NightlyBuild ⇒
         if (moreRecent(NightlyBuild))
           (OldNightlyBuild, Some(newNightly))
         else
-          (NightlyBuild, nothing)
+          (NightlyBuild, defaultMessageForVersion)
       case Legacy ⇒
         if (moreRecent(Legacy))
           (OldLegacy, Some(newRelease))
         else
-          (Legacy, nothing)
+          (Legacy, defaultMessageForVersion)
       case DeveloperBuild ⇒
-        (DeveloperBuild, nothing)
+        (DeveloperBuild, defaultMessageForVersion)
     }
   }
 

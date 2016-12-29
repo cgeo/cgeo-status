@@ -41,7 +41,8 @@ class PostgreSQLDB extends Database {
     def messageId = column[Option[String]]("message_id")
     def icon = column[Option[String]]("icon")
     def url = column[Option[String]]("url")
-    def * = (message, messageId, icon, url) <> ((Message.apply _).tupled, Message.unapply)
+    def condition = column[Option[String]]("condition")
+    def * = (message, messageId, icon, url, condition) <> ((Message.apply _).tupled, Message.unapply)
   }
   val messages = TableQuery[Messages]
 

@@ -23,6 +23,8 @@ class API @Inject() (database: Database, status: Status,
     @Named("counter-actor") counterActor: ActorRef,
     config: Configuration) extends Controller {
 
+  import API._
+
   private[this] val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
   private[this] val counterTimeout = Duration(config.getMilliseconds("count-request-timeout").get, TimeUnit.MILLISECONDS)
   private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
@@ -97,10 +99,17 @@ class API @Inject() (database: Database, status: Status,
   def updateMessage() = Action { request ⇒
     val params = request.body.asFormUrlEncoded.getOrElse[Map[String, Seq[String]]](Map.empty)
     checkKey(params) { params ⇒
-      params.get("message") match {
+      params.get("message").ifNotEmpty match {
         case Some(message) ⇒
-          database.updateMessage(Message(message, params.get("message_id"), params.get("icon"), params.get("url")))
-          Ok("updated")
+          val condition = params.get("condition").ifNotEmpty
+          Expression.parseError(condition) match {
+            case Some(error) =>
+              BadRequest(s"Unable to parse condition (${condition.get}): $error")
+            case None =>
+              database.updateMessage(Message(message, params.get("message_id").ifNotEmpty, params.get("icon").ifNotEmpty,
+                params.get("url").ifNotEmpty, condition))
+              Ok("updated")
+          }
         case None ⇒
           BadRequest("invalid parameters")
       }
@@ -169,6 +178,14 @@ class API @Inject() (database: Database, status: Status,
 
   def locations(initial: Int, timestamp: Long) = WebSocket.accept[JsValue, JsValue] { request ⇒
     Flow.fromSinkAndSource(Sink.ignore, locationsSource(initial, timestamp))
+  }
+
+}
+
+object API {
+
+  implicit class IfNotEmpty(s: Option[String]) {
+    def ifNotEmpty: Option[String] = s.flatMap(i => if (i.nonEmpty) s else None)
   }
 
 }
