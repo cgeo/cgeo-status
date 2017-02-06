@@ -6,6 +6,6 @@
 [subrepo]
 	remote = https://github.com/Sanoma-CDA/maxmind-geoip2-scala.git
 	branch = master
-	commit = e3feac17f3d9594d242f4642541e3fbed472ce06
-	parent = 6d0e31f4d44cbc214783f071926cc02736bc2e3a
+	commit = b117e8bfab1bc71b38a9673586e18e200561157f
+	parent = f6c976c4a135f926e5cad7bb91b67aac878c3d9b
 	cmdver = 0.3.0
