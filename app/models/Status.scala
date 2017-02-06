@@ -47,7 +47,7 @@ class Status @Inject() (database: Database) {
 
   def defaultMessage(versionCode: Int, versionName: String, kind: BuildKind): Option[Message] = {
     val msg = database.getMessage
-    msg.flatMap { m => if (m.conditionExpr.interpret(versionCode, versionName, kind)) msg else None }
+    msg.flatMap { m ⇒ if (m.conditionExpr.interpret(versionCode, versionName, kind)) msg else None }
   }
 
   private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[Version]) =
@@ -61,7 +61,7 @@ class Status @Inject() (database: Database) {
     lazy val defaultMessageForVersion = defaultMessage(versionCode, versionName, buildKind)
     def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))
-     buildKind match {
+    buildKind match {
       case Release ⇒
         if (moreRecent(Release))
           (OldRelease, Some(newRelease))

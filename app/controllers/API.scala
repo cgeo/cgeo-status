@@ -103,9 +103,9 @@ class API @Inject() (database: Database, status: Status,
         case Some(message) ⇒
           val condition = params.get("condition").ifNotEmpty
           Expression.parseError(condition) match {
-            case Some(error) =>
+            case Some(error) ⇒
               BadRequest(s"Unable to parse condition (${condition.get}): $error")
-            case None =>
+            case None ⇒
               database.updateMessage(Message(message, params.get("message_id").ifNotEmpty, params.get("icon").ifNotEmpty,
                 params.get("url").ifNotEmpty, condition))
               Ok("updated")
@@ -185,7 +185,7 @@ class API @Inject() (database: Database, status: Status,
 object API {
 
   implicit class IfNotEmpty(s: Option[String]) {
-    def ifNotEmpty: Option[String] = s.flatMap(i => if (i.nonEmpty) s else None)
+    def ifNotEmpty: Option[String] = s.flatMap(i ⇒ if (i.nonEmpty) s else None)
   }
 
 }
