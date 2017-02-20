@@ -76,6 +76,8 @@ class Status @Inject() (database: Database) {
           (OldReleaseCandidate, Some(newRC))
         else
           (ReleaseCandidate, defaultMessageForVersion)
+      case ReleaseCandidateDeployment ⇒
+        (ReleaseCandidateDeployment, defaultMessageForVersion)
       case NightlyBuild ⇒
         if (moreRecent(NightlyBuild))
           (OldNightlyBuild, Some(newNightly))
