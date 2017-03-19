@@ -9,9 +9,12 @@ class Status @Inject() (database: Database) {
   private val releaseRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d(-\d+|[a-z])?$""".r
 
   def kind(versionName: String): UpToDateKind =
-    if (versionName.endsWith("-legacy"))
-      Legacy
-    else if (releaseCandidateRegex.findFirstIn(versionName).isDefined) {
+    if (versionName.endsWith("-legacy")) {
+      if (versionName < BuildKind.unmaintainedTreshold)
+        UnmaintainedLegacy
+      else
+        Legacy
+    } else if (releaseCandidateRegex.findFirstIn(versionName).isDefined) {
       if (database.latestVersionFor(ReleaseCandidateDeployment).exists(_.name == versionName))
         ReleaseCandidateDeployment
       else
@@ -88,6 +91,8 @@ class Status @Inject() (database: Database) {
           (OldLegacy, Some(newRelease))
         else
           (Legacy, defaultMessageForVersion)
+      case UnmaintainedLegacy =>
+        (UnmaintainedLegacy, defaultMessageForVersion)
       case DeveloperBuild ⇒
         (DeveloperBuild, defaultMessageForVersion)
     }

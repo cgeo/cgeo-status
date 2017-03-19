@@ -28,9 +28,13 @@ object OldReleaseCandidate extends OldKind("old rc", None)
 
 object OldNightlyBuild extends OldKind("old nightly", None)
 
+object UnmaintainedLegacy extends UpToDateKind("unmaintained legacy", None)
+
 object BuildKind {
   val kinds: Seq[BuildKind] = Seq(Deployment, Release, Legacy, ReleaseCandidateDeployment, ReleaseCandidate, NightlyBuild, DeveloperBuild,
-    OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild)
+    OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild, UnmaintainedLegacy)
   val upToDateKinds = kinds.filter(!_.synthesized)
   val fromName = upToDateKinds.map(kind ⇒ kind.name → kind).toMap
+
+  val unmaintainedTreshold = "2015"
 }
