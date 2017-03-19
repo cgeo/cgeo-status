@@ -8,9 +8,9 @@ class Status @Inject() (database: Database) {
   private val releaseCandidateRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d-RC(\d+)?$""".r
   private val releaseRegex = """^\d\d\d\d[\.-]\d\d[\.-]\d\d(-\d+|[a-z])?$""".r
 
-  def kind(versionName: String): UpToDateKind =
+  private def kind(versionCode: Int, versionName: String): UpToDateKind =
     if (versionName.endsWith("-legacy")) {
-      if (versionName < BuildKind.unmaintainedTreshold)
+      if (versionCode < BuildKind.unmaintainedTreshold)
         UnmaintainedLegacy
       else
         Legacy
@@ -60,7 +60,7 @@ class Status @Inject() (database: Database) {
     }
 
   def status(versionCode: Int, versionName: String): (BuildKind, Option[Message]) = {
-    val buildKind = kind(versionName)
+    val buildKind = kind(versionCode, versionName)
     lazy val defaultMessageForVersion = defaultMessage(versionCode, versionName, buildKind)
     def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))

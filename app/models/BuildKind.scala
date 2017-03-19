@@ -36,5 +36,5 @@ object BuildKind {
   val upToDateKinds = kinds.filter(!_.synthesized)
   val fromName = upToDateKinds.map(kind ⇒ kind.name → kind).toMap
 
-  val unmaintainedTreshold = "2015"
+  val unmaintainedTreshold = 20150101
 }
