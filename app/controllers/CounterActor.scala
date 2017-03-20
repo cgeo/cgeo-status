@@ -117,6 +117,13 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       val adjusted = adjust(userCount)
       sender ! BuildKind.kinds.map(k ⇒ k → adjusted(k))
 
+    case GetUserCountByLocale(langOnly) ⇒
+      var userCount: Map[String, Long] = Map()
+      for (user ← users) {
+        val locale = if (langOnly) user.locale.split("_", 2).head else user.locale
+        userCount += locale → (userCount.getOrElse(locale, 0L) + 1L)
+      }
+      sender ! adjust(userCount)
   }
 
 }
@@ -127,6 +134,7 @@ object CounterActor {
   case class GetAllUsers(withCoordinates: Boolean, limit: Int, timestamp: Long)
   case object GetUserCount
   case object GetUserCountByKind
+  case class GetUserCountByLocale(langOnly: Boolean)
   case object Reset
   private case class WithGeoIP(user: User, generation: Int)
 

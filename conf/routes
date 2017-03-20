@@ -25,6 +25,12 @@ DELETE  /api/update/:kind           controllers.API.delete(kind: String, key: St
 # Get counter by kind
 GET /api/count/by-kind          controllers.API.countByKind
 
+# Get counter by locale
+GET /api/count/by-locale        controllers.API.countByLocale()
+
+# Get counter by lang
+GET /api/count/by-lang          controllers.API.countByLang()
+
 # Get recent locations
 GET /api/recent-locations        controllers.API.recentLocations(limit: Int ?= Int.MaxValue, timestamp: Long ?= -1)
 

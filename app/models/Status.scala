@@ -91,7 +91,7 @@ class Status @Inject() (database: Database) {
           (OldLegacy, Some(newRelease))
         else
           (Legacy, defaultMessageForVersion)
-      case UnmaintainedLegacy =>
+      case UnmaintainedLegacy ⇒
         (UnmaintainedLegacy, defaultMessageForVersion)
       case DeveloperBuild ⇒
         (DeveloperBuild, defaultMessageForVersion)

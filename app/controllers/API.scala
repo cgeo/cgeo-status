@@ -8,7 +8,7 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import controllers.CounterActor.{GetAllUsers, GetUserCount, GetUserCountByKind, Reset}
+import controllers.CounterActor._
 import controllers.geoip.GeoIPWebSocket
 import models._
 import play.api.Configuration
@@ -150,6 +150,14 @@ class API @Inject() (database: Database, status: Status,
       Ok(JsArray(significant))
     }
   }
+
+  def countByLocaleOrLang(langOnly: Boolean) = Action.async {
+    counterActor.ask(GetUserCountByLocale(langOnly))(counterTimeout).mapTo[Map[String, Long]].map(m ⇒ Ok(Json.toJson(m)))
+  }
+
+  def countByLocale = countByLocaleOrLang(false)
+
+  def countByLang = countByLocaleOrLang(true)
 
   def recentLocations(limit: Int, timestamp: Long) = Action.async { request ⇒
     counterActor.ask(GetAllUsers(withCoordinates = true, limit, timestamp))(counterTimeout).mapTo[List[User]].map { users ⇒
