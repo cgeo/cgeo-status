@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.google.inject.Singleton
 import play.api.Logger
 import play.api.libs.concurrent.Execution.Implicits._
-import slick.driver.PostgresDriver.api.{Database ⇒ D, _}
+import slick.jdbc.PostgresProfile.api.{Database ⇒ D, _}
 import slick.lifted.{TableQuery, Tag}
 
 @Singleton
