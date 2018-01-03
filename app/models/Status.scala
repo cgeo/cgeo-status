@@ -48,9 +48,19 @@ class Status @Inject() (database: Database) {
     None
   )
 
-  def defaultMessage(versionCode: Int, versionName: String, kind: BuildKind): Option[Message] = {
+  /**
+   * Get the message to return if no upgrade message is given.
+   *
+   * @param versionCode the version code of the checking application
+   * @param versionName the version name of the checking application
+   * @param kind the kind of the checking application
+   * @return a pair with the message to give, and a boolean which is true when the message is a conditional
+   *         one and matches the checking application
+   */
+  def defaultMessage(versionCode: Int, versionName: String, kind: BuildKind): (Option[Message], Boolean) = {
     val msg = database.getMessage
-    msg.flatMap { m ⇒ if (m.conditionExpr.interpret(versionCode, versionName, kind)) msg else None }
+    val filtered = msg.flatMap { m ⇒ if (m.conditionExpr.interpret(versionCode, versionName, kind)) msg else None }
+    (filtered, filtered.fold(false)(_.hasCondition))
   }
 
   private def checkMoreRecent(versionCode: Int, versionName: String, reference: Option[Version]) =
@@ -61,34 +71,35 @@ class Status @Inject() (database: Database) {
 
   def status(versionCode: Int, versionName: String): (BuildKind, Option[Message]) = {
     val buildKind = kind(versionCode, versionName)
-    lazy val defaultMessageForVersion = defaultMessage(versionCode, versionName, buildKind)
+    val (defaultMessageForVersion, isSpecific) = defaultMessage(versionCode, versionName, buildKind)
+    val specificMessage = if (isSpecific) defaultMessageForVersion else None
     def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))
     buildKind match {
       case Release ⇒
         if (moreRecent(Release))
-          (OldRelease, Some(newRelease))
+          (OldRelease, specificMessage orElse Some(newRelease))
         else
           (Release, defaultMessageForVersion)
       case Deployment ⇒
         (Deployment, defaultMessageForVersion)
       case ReleaseCandidate ⇒
         if (moreRecent(Release))
-          (OldReleaseCandidate, Some(newRelease))
+          (OldReleaseCandidate, specificMessage orElse Some(newRelease))
         else if (moreRecent(ReleaseCandidate))
-          (OldReleaseCandidate, Some(newRC))
+          (OldReleaseCandidate, specificMessage orElse Some(newRC))
         else
           (ReleaseCandidate, defaultMessageForVersion)
       case ReleaseCandidateDeployment ⇒
         (ReleaseCandidateDeployment, defaultMessageForVersion)
       case NightlyBuild ⇒
         if (moreRecent(NightlyBuild))
-          (OldNightlyBuild, Some(newNightly))
+          (OldNightlyBuild, specificMessage orElse Some(newNightly))
         else
           (NightlyBuild, defaultMessageForVersion)
       case Legacy ⇒
         if (moreRecent(Legacy))
-          (OldLegacy, Some(newRelease))
+          (OldLegacy, specificMessage orElse Some(newRelease))
         else
           (Legacy, defaultMessageForVersion)
       case UnmaintainedLegacy ⇒
