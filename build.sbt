@@ -5,7 +5,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 SbtScalariform.scalariformSettings
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.11.9",
+  scalaVersion := "2.11.12",
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignArguments, true)
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -18,7 +18,6 @@ lazy val commonSettings = Seq(
 lazy val cgeoStatus = (project in file(".")).enablePlugins(PlayScala).settings(commonSettings: _*).settings(
   name := "cgeo-status",
   version := "1.1",
-  scalaVersion := "2.11.8",
   libraryDependencies ++= Seq(filters, ws,
     "com.typesafe.slick" %% "slick" % "3.2.0",
     "org.postgresql" % "postgresql" % "42.0.0",

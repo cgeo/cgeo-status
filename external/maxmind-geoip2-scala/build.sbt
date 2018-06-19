@@ -5,7 +5,7 @@ lazy val packageInfo = Seq(
 )
 
 lazy val scalaVersions = Seq(
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.11.12",
   crossScalaVersions := Seq("2.10.6", "2.11.8")
 )
 
