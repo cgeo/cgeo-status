@@ -7,7 +7,7 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import models.{BuildKind, Status, User}
+import models.{BuildKind, GCMembership, Status, User}
 import play.api.{Configuration, Logger}
 
 import scala.concurrent.duration._
@@ -43,7 +43,7 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
   }
 
   private[this] def refreshKind(user: User): User =
-    user.copy(kind = status.status(user.versionCode, user.versionName)._1)
+    user.copy(kind = status.status(user.versionCode, user.versionName, user.gCMembership)._1)
 
   def receive = {
 
@@ -124,6 +124,14 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
         userCount += locale → (userCount.getOrElse(locale, 0L) + 1L)
       }
       sender ! adjust(userCount)
+
+    case GetUserCountByGCMembership ⇒
+      var userCount: Map[GCMembership, Long] = GCMembership.kinds.map(_ → 0L).toMap
+      for (user ← users) {
+        userCount += user.gCMembership → (userCount(user.gCMembership) + 1)
+      }
+      val adjusted = adjust(userCount)
+      sender ! GCMembership.kinds.map(k ⇒ k.name → adjusted(k)).toMap
   }
 
 }
@@ -135,6 +143,7 @@ object CounterActor {
   case object GetUserCount
   case object GetUserCountByKind
   case class GetUserCountByLocale(langOnly: Boolean)
+  case object GetUserCountByGCMembership
   case object Reset
   private case class WithGeoIP(user: User, generation: Int)
 

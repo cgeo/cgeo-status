@@ -5,7 +5,7 @@
 GET     /                           controllers.Application.index
 
 # Status page
-GET	/api/status.json            controllers.API.getStatus(version_code: Int, version_name: String)
+GET	/api/status.json            controllers.API.getStatus(version_code: Int, version_name: String, gc_membership: Option[String])
 
 # Update message
 POST    /api/update/message         controllers.API.updateMessage()
@@ -30,6 +30,9 @@ GET /api/count/by-locale        controllers.API.countByLocale()
 
 # Get counter by lang
 GET /api/count/by-lang          controllers.API.countByLang()
+
+# Get counter by GC membership
+GET /api/count/by-gc-membership  controllers.API.countByGCMembership()
 
 # Get recent locations
 GET /api/recent-locations        controllers.API.recentLocations(limit: Int ?= Int.MaxValue, timestamp: Long ?= -1)

@@ -3,23 +3,27 @@ package models
 import scala.util.parsing.combinator.RegexParsers
 
 sealed trait Expression[T] {
-  def interpret(versionCode: Int, versionName: String, kind: BuildKind): T
+  def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): T
 }
 
 private object VersionCode extends Expression[Int] {
-  override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Int = versionCode
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): Int = versionCode
 }
 
 private object VersionName extends Expression[String] {
-  override def interpret(versionCode: Int, versionName: String, kind: BuildKind): String = versionName
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): String = versionName
+}
+
+private object GCMembership_ extends Expression[String] {
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): String = gcMembership.name
 }
 
 private object Kind extends Expression[String] {
-  override def interpret(versionCode: Int, versionName: String, kind: BuildKind): String = kind.name
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): String = kind.name
 }
 
 class Literal[T](a: T) extends Expression[T] {
-  override def interpret(versionCode: Int, versionName: String, kind: BuildKind): T = a
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): T = a
 }
 
 object TrueExpression extends Literal(true)
@@ -27,12 +31,13 @@ object TrueExpression extends Literal(true)
 object FalseExpression extends Literal(false)
 
 private class Binary[T](a: Expression[T], b: Expression[T], op: (T, T) ⇒ Boolean) extends Expression[Boolean] {
-  override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Boolean =
-    op(a.interpret(versionCode, versionName, kind), b.interpret(versionCode, versionName, kind))
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): Boolean =
+    op(a.interpret(versionCode, versionName, kind, gcMembership), b.interpret(versionCode, versionName, kind, gcMembership))
 }
 
 private class Not(a: Expression[Boolean]) extends Expression[Boolean] {
-  override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Boolean = !a.interpret(versionCode, versionName, kind)
+  override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): Boolean =
+    !a.interpret(versionCode, versionName, kind, gcMembership)
 }
 
 object Expression extends RegexParsers {
@@ -43,8 +48,9 @@ object Expression extends RegexParsers {
 
   private def versionName: Parser[Expression[String]] = "versionName" ^^ { _ ⇒ VersionName }
   private def kind: Parser[Expression[String]] = "kind" ^^ { _ ⇒ Kind }
+  private def gcMembership: Parser[Expression[String]] = "gcMembership" ^^ { _ ⇒ GCMembership_ }
   private def strLit: Parser[Expression[String]] = """"([^"]*)"""".r ^^ { s ⇒ new Literal(s.drop(1).dropRight(1)) }
-  private def str: Parser[Expression[String]] = versionName | kind | strLit
+  private def str: Parser[Expression[String]] = versionName | kind | gcMembership | strLit
 
   private def bool_term: Parser[Expression[Boolean]] = t | f | int_op | str_op | bool_not | ("(" ~> bool <~ ")")
   private def bool: Parser[Expression[Boolean]] = bool_binop | bool_term
@@ -71,12 +77,12 @@ object Expression extends RegexParsers {
 
   private def bool_binop: Parser[Expression[Boolean]] = bool_term ~ ("&&" | "||" | "^") ~ bool ^^ {
     case a ~ "&&" ~ b ⇒ new Expression[Boolean] {
-      override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Boolean =
-        if (a.interpret(versionCode, versionName, kind)) b.interpret(versionCode, versionName, kind) else false
+      override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): Boolean =
+        if (a.interpret(versionCode, versionName, kind, gcMembership)) b.interpret(versionCode, versionName, kind, gcMembership) else false
     }
     case a ~ "||" ~ b ⇒ new Expression[Boolean] {
-      override def interpret(versionCode: Int, versionName: String, kind: BuildKind): Boolean =
-        if (a.interpret(versionCode, versionName, kind)) true else b.interpret(versionCode, versionName, kind)
+      override def interpret(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): Boolean =
+        if (a.interpret(versionCode, versionName, kind, gcMembership)) true else b.interpret(versionCode, versionName, kind, gcMembership)
     }
     case a ~ "^" ~ b ⇒ new Binary(a, b, (_: Boolean) ^ (_: Boolean))
   }

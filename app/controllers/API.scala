@@ -30,11 +30,12 @@ class API @Inject() (database: Database, status: Status,
   private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
   private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
 
-  def getStatus(version_code: Int, version_name: String) = Action { request ⇒
-    val (kind, stat) = status.status(version_code, version_name)
+  def getStatus(version_code: Int, version_name: String, gc_membership: Option[String]) = Action { request ⇒
+    val gcMembership = gc_membership.fold(GCUnknownMembership: GCMembership)(GCMembership.parse)
+    val (kind, stat) = status.status(version_code, version_name, gcMembership)
     val locale = request.getQueryString("locale").getOrElse("")
     val ip = request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
-    counterActor ! User(kind, locale, None, version_name, version_code, ip)
+    counterActor ! User(kind, locale, None, version_name, version_code, ip, gcMembership)
     Ok(stat.fold[JsValue](Json.obj("status" → "up-to-date"))(toJson(_)))
   }
 
@@ -158,6 +159,10 @@ class API @Inject() (database: Database, status: Status,
   def countByLocale = countByLocaleOrLang(false)
 
   def countByLang = countByLocaleOrLang(true)
+
+  def countByGCMembership = Action.async {
+    counterActor.ask(GetUserCountByGCMembership)(counterTimeout).mapTo[Map[String, Long]].map(m ⇒ Ok(Json.toJson(m)))
+  }
 
   def recentLocations(limit: Int, timestamp: Long) = Action.async { request ⇒
     counterActor.ask(GetAllUsers(withCoordinates = true, limit, timestamp))(counterTimeout).mapTo[List[User]].map { users ⇒

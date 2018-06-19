@@ -57,9 +57,9 @@ class Status @Inject() (database: Database) {
    * @return a pair with the message to give, and a boolean which is true when the message is a conditional
    *         one and matches the checking application
    */
-  def defaultMessage(versionCode: Int, versionName: String, kind: BuildKind): (Option[Message], Boolean) = {
+  def defaultMessage(versionCode: Int, versionName: String, kind: BuildKind, gcMembership: GCMembership): (Option[Message], Boolean) = {
     val msg = database.getMessage
-    val filtered = msg.flatMap { m ⇒ if (m.conditionExpr.interpret(versionCode, versionName, kind)) msg else None }
+    val filtered = msg.flatMap { m ⇒ if (m.conditionExpr.interpret(versionCode, versionName, kind, gcMembership)) msg else None }
     (filtered, filtered.fold(false)(_.hasCondition))
   }
 
@@ -69,9 +69,9 @@ class Status @Inject() (database: Database) {
         (versionCode == ref.code && versionName < ref.name)
     }
 
-  def status(versionCode: Int, versionName: String): (BuildKind, Option[Message]) = {
+  def status(versionCode: Int, versionName: String, gcMembership: GCMembership): (BuildKind, Option[Message]) = {
     val buildKind = kind(versionCode, versionName)
-    val (defaultMessageForVersion, isSpecific) = defaultMessage(versionCode, versionName, buildKind)
+    val (defaultMessageForVersion, isSpecific) = defaultMessage(versionCode, versionName, buildKind, gcMembership)
     val specificMessage = if (isSpecific) defaultMessageForVersion else None
     def moreRecent(kind: UpToDateKind) =
       checkMoreRecent(versionCode, versionName, database.latestVersionFor(kind))

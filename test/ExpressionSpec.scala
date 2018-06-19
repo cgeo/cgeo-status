@@ -1,10 +1,10 @@
-import models.{Expression, NightlyBuild}
+import models.{Expression, GCPremiumMember, NightlyBuild}
 import org.scalatestplus.play._
 
 class ExpressionSpec extends PlaySpec {
 
   def checkResult(expr: String, expected: Boolean): Unit = {
-    Expression(expr).get.interpret(20170201, "2017.02.01", NightlyBuild) mustBe expected
+    Expression(expr).get.interpret(20170201, "2017.02.01", NightlyBuild, GCPremiumMember) mustBe expected
   }
 
   def checkTrue(expr: String): Unit = {
@@ -109,6 +109,11 @@ class ExpressionSpec extends PlaySpec {
     "be able to compare kind" in {
       checkTrue("""kind == "nightly"""")
       checkFalse("""kind == "release"""")
+    }
+
+    "be able to compare GC membership" in {
+      checkTrue("""gcMembership == "premium"""")
+      checkFalse("""gcMembership == "basic"""")
     }
 
   }
