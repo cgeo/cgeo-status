@@ -5,7 +5,7 @@
 GET     /                           controllers.Application.index
 
 # Status page
-GET	/api/status.json            controllers.API.getStatus(version_code: Int, version_name: String, gc_membership: Option[String])
+GET	/api/status.json            controllers.API.getStatus(version_code: Int, version_name: String, gc_membership: Option[String], gc_mmembership: Option[String])
 
 # Update message
 POST    /api/update/message         controllers.API.updateMessage()
