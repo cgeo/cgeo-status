@@ -5,20 +5,19 @@ lazy val packageInfo = Seq(
 )
 
 lazy val scalaVersions = Seq(
-  scalaVersion := "2.11.12",
-  crossScalaVersions := Seq("2.10.6", "2.11.8")
+  scalaVersion := "2.12.6",
 )
 
 val commonBuildLibs = Seq(
-  "com.maxmind.geoip2"  % "geoip2"          % "2.3.1",
-  "com.twitter"        %% "util-collection" % "6.23.0"
+  "com.maxmind.geoip2"  % "geoip2"          % "2.12.0",
+  "com.twitter"        %% "util-collection" % "18.6.0"
 )
 val commonTestLibs = Seq(
-  "org.scalacheck" %% "scalacheck" % "1.12.2",
-  "org.scalatest"  %% "scalatest"  % "2.2.4"
+  "org.scalacheck" %% "scalacheck" % "1.14.0",
+  "org.scalatest"  %% "scalatest"  % "3.0.5"
 ).map(_ % Test)
 
-val scalaLangLibs = Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.3")
+val scalaLangLibs = Seq("org.scala-lang.modules" %% "scala-xml" % "1.1.0")
 
 
 lazy val root = (project in file("."))
