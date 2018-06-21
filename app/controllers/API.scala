@@ -30,8 +30,8 @@ class API @Inject() (database: Database, status: Status,
   private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
   private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
 
-  def getStatus(version_code: Int, version_name: String, gc_membership: Option[String], gc_mmembership: Option[String]) = Action { request ⇒
-    val gcMembership = gc_membership.orElse(gc_mmembership).fold(GCUnknownMembership: GCMembership)(GCMembership.parse)
+  def getStatus(version_code: Int, version_name: String, gc_membership: Option[String]) = Action { request ⇒
+    val gcMembership = gc_membership.fold(GCUnknownMembership: GCMembership)(GCMembership.parse)
     val (kind, stat) = status.status(version_code, version_name, gcMembership)
     val locale = request.getQueryString("locale").getOrElse("")
     val ip = request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
