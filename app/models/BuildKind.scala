@@ -32,7 +32,7 @@ object UnmaintainedLegacy extends UpToDateKind("unmaintained legacy", None)
 
 object BuildKind {
   val kinds: Seq[BuildKind] = Seq(Deployment, Release, Legacy, ReleaseCandidateDeployment, ReleaseCandidate, NightlyBuild, DeveloperBuild,
-    OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild, UnmaintainedLegacy)
+                                  OldRelease, OldLegacy, OldReleaseCandidate, OldNightlyBuild, UnmaintainedLegacy)
   val upToDateKinds = kinds.filter(!_.synthesized)
   val fromName = upToDateKinds.map(kind ⇒ kind.name → kind).toMap
 

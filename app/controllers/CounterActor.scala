@@ -17,8 +17,8 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
   import CounterActor._
 
   private[this] implicit val dispatcher = context.system.dispatcher
-  private[this] val geoIPTimeout: Timeout = Duration(config.getMilliseconds("geoip.resolution-timeout").get, TimeUnit.MILLISECONDS)
-  private[this] val maxWebSockets = config.getInt("max-websockets").get
+  private[this] val geoIPTimeout: Timeout = Duration(config.getMillis("geoip.resolution-timeout"), TimeUnit.MILLISECONDS)
+  private[this] val maxWebSockets = config.get[Int]("max-websockets")
   private[this] var users: List[User] = Nil
   private[this] var clients: Set[ActorRef] = Set()
   private[this] var usersWithCoordinates: Long = 0

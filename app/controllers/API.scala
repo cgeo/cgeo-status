@@ -9,26 +9,27 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.CounterActor._
-import controllers.geoip.GeoIPWebSocket
 import models._
 import play.api.Configuration
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json._
 import play.api.libs.json._
 import play.api.mvc._
 
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext
 
-class API @Inject() (database: Database, status: Status,
-    @Named("counter-actor") counterActor: ActorRef,
-    config: Configuration) extends Controller {
+class API @Inject() (components: ControllerComponents, database: Database, status: Status,
+    ec: ExecutionContext, @Named("counter-actor") counterActor: ActorRef,
+    config: Configuration) extends AbstractController(components) {
 
   import API._
 
+  implicit val ec_ = ec
+
   private[this] val API_KEY = Option(System.getenv("API_KEY")) getOrElse "apikey"
-  private[this] val counterTimeout = Duration(config.getMilliseconds("count-request-timeout").get, TimeUnit.MILLISECONDS)
-  private[this] val maxBatchInterval = Duration(config.getMilliseconds("geoip.client.max-batch-interval").get, TimeUnit.MILLISECONDS)
-  private[this] val maxBatchSize = config.getInt("geoip.client.max-batch-size").get
+  private[this] val counterTimeout = Duration(config.getMillis("count-request-timeout"), TimeUnit.MILLISECONDS)
+  private[this] val maxBatchInterval = Duration(config.getMillis("geoip.client.max-batch-interval"), TimeUnit.MILLISECONDS)
+  private[this] val maxBatchSize = config.get[Int]("geoip.client.max-batch-size")
 
   def getStatus(version_code: Int, version_name: String, gc_membership: Option[String]) = Action { request ⇒
     val gcMembership = gc_membership.fold(GCUnknownMembership: GCMembership)(GCMembership.parse)
@@ -108,7 +109,7 @@ class API @Inject() (database: Database, status: Status,
               BadRequest(s"Unable to parse condition (${condition.get}): $error")
             case None ⇒
               database.updateMessage(Message(message, params.get("message_id").ifNotEmpty, params.get("icon").ifNotEmpty,
-                params.get("url").ifNotEmpty, condition))
+                                             params.get("url").ifNotEmpty, condition))
               Ok("updated")
           }
         case None ⇒
@@ -175,8 +176,10 @@ class API @Inject() (database: Database, status: Status,
     // The total number of users will also be added with every message.
     // 5 batches are queued if backpressured by the websocket, then the whole
     // buffer is dropped as the client obviously cannot keep up.
-    Source.actorPublisher[User](Props(new GeoIPWebSocket(counterActor)))
-      .groupedWithin(maxBatchSize, maxBatchInterval)
+    Source.actorRef[User](50, OverflowStrategy.dropBuffer).mapMaterializedValue { actorRef ⇒
+      counterActor ! CounterActor.Register(actorRef)
+      actorRef
+    }.groupedWithin(maxBatchSize, maxBatchInterval)
       .prepend(Source.fromFuture(counterActor.ask(GetAllUsers(withCoordinates = true, initial, timestamp))(counterTimeout)
         .mapTo[List[User]]))
       .mapAsync(1) { g ⇒

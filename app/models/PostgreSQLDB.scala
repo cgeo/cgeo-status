@@ -2,14 +2,14 @@ package models
 
 import java.util.concurrent.atomic.AtomicReference
 
-import com.google.inject.Singleton
+import com.google.inject._
 import play.api.Logger
-import play.api.libs.concurrent.Execution.Implicits._
+import scala.concurrent.ExecutionContext
 import slick.jdbc.PostgresProfile.api.{Database ⇒ D, _}
 import slick.lifted.{TableQuery, Tag}
 
 @Singleton
-class PostgreSQLDB extends Database {
+class PostgreSQLDB @Inject() (implicit ec: ExecutionContext) extends Database {
 
   private[this] val db = D.forConfig("databaseUrl")
 

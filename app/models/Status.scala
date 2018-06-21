@@ -33,20 +33,17 @@ class Status @Inject() (database: Database) {
     "New release available.\nClick to install.",
     Some("status_new_release"), Some("attribute_climbing"),
     Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"),
-    None
-  )
+    None)
 
   private val newRC = Message(
     "New release candidate available.\nClick to install.",
     Some("status_new_rc"), Some("attribute_climbing"), Some("https://play.google.com/store/apps/details?id=cgeo.geocaching"),
-    None
-  )
+    None)
 
   private val newNightly = Message(
     "New nightly build available.\nClick to install.",
     Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk"),
-    None
-  )
+    None)
 
   /**
    * Get the message to return if no upgrade message is given.
