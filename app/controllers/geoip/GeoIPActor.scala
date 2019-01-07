@@ -36,14 +36,14 @@ class GeoIPActor @Inject() (
   private[this] implicit val fm = ActorMaterializer()
   private[this] implicit val ec = fm.executionContext
 
-  override def preStart() = {
-    val existingFileName = config.get[Option[String]]("geoip.use-existing-file")
-    if (existingFileName.isDefined) {
-      Logger.warn("geoip.use-existing-file is defined, not downloading fresh database")
-      existingFileName.foreach(name ⇒ self ! GeoIPActor.UseGeoIPData(new File(name)))
-    } else
-      self ! Download
-  }
+  override def preStart() =
+    config.getOptional[String]("geoip.use-existing-file") match {
+      case Some(fileName) ⇒
+        Logger.warn("geoip.use-existing-file is defined, not downloading fresh database")
+        self ! GeoIPActor.UseGeoIPData(new File(fileName))
+      case None ⇒
+        self ! Download
+    }
 
   def receive = {
 
