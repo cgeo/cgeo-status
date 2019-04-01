@@ -2,7 +2,7 @@ package controllers
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.{Flow, Sink, Source}
@@ -15,8 +15,8 @@ import play.api.libs.json.Json._
 import play.api.libs.json._
 import play.api.mvc._
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 class API @Inject() (components: ControllerComponents, database: Database, status: Status,
     ec: ExecutionContext, @Named("counter-actor") counterActor: ActorRef,
@@ -36,7 +36,9 @@ class API @Inject() (components: ControllerComponents, database: Database, statu
     val (kind, stat) = status.status(version_code, version_name, gcMembership)
     val locale = request.getQueryString("locale").getOrElse("")
     val ip = request.headers.get("X-Forwarded-For").fold(request.remoteAddress)(_.split(", ").last)
-    counterActor ! User(kind, locale, None, version_name, version_code, ip, gcMembership)
+    val active_connectors = request.getQueryString("active_connectors")
+    val connectorInfo = active_connectors.fold[User.ConnectorInfo](User.NoConnectorInfo)(s ⇒ User.Connectors(s.split(',')))
+    counterActor ! User(kind, locale, None, version_name, version_code, ip, gcMembership, connectorInfo)
     Ok(stat.fold[JsValue](Json.obj("status" → "up-to-date"))(toJson(_)))
   }
 
@@ -163,6 +165,10 @@ class API @Inject() (components: ControllerComponents, database: Database, statu
 
   def countByGCMembership = Action.async {
     counterActor.ask(GetUserCountByGCMembership)(counterTimeout).mapTo[Map[String, Long]].map(m ⇒ Ok(Json.toJson(m)))
+  }
+
+  def countByConnector = Action.async {
+    counterActor.ask(GetUserCountByConnector)(counterTimeout).mapTo[Map[String, Long]].map(m ⇒ Ok(Json.toJson(m)))
   }
 
   def recentLocations(limit: Int, timestamp: Long) = Action.async { request ⇒

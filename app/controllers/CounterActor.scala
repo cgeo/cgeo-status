@@ -10,6 +10,7 @@ import com.google.inject.name.Named
 import models.{BuildKind, GCMembership, Status, User}
 import play.api.{Configuration, Logger}
 
+import scala.collection.mutable.{Map ⇒ MutMap}
 import scala.concurrent.duration._
 
 class CounterActor @Inject() (config: Configuration, status: Status, @Named("geoip-actor") geoIPActor: ActorRef) extends Actor {
@@ -37,9 +38,9 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       if (range <= 0) 1.0 else updatePeriodMs.toDouble / range
     }
 
-  private[this] def adjust[T](data: Map[T, Long]): Map[T, Long] = {
+  private[this] def adjust[T](data: scala.collection.Map[T, Long]): Map[T, Long] = {
     val f = factor
-    data.mapValues(count ⇒ (count * f).round)
+    data.mapValues(count ⇒ (count * f).round).toMap
   }
 
   private[this] def refreshKind(user: User): User =
@@ -118,10 +119,10 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       sender ! BuildKind.kinds.map(k ⇒ k → adjusted(k))
 
     case GetUserCountByLocale(langOnly) ⇒
-      var userCount: Map[String, Long] = Map()
+      var userCount = MutMap[String, Long]()
       for (user ← users) {
         val locale = if (langOnly) user.locale.split("_", 2).head else user.locale
-        userCount += locale → (userCount.getOrElse(locale, 0L) + 1L)
+        inc(userCount, locale)
       }
       sender ! adjust(userCount)
 
@@ -132,6 +133,21 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       }
       val adjusted = adjust(userCount)
       sender ! GCMembership.kinds.map(k ⇒ k.name → adjusted(k)).toMap
+
+    case GetUserCountByConnector ⇒
+      var userCount = MutMap[String, Long]()
+      for (user ← users)
+        user.connectorInfo match {
+          case User.NoConnectorInfo ⇒ inc(userCount, "_noinfo")
+          case User.Connectors(connectors) ⇒
+            inc(userCount, "_withinfo")
+            if (connectors.isEmpty)
+              inc(userCount, "_noconnectors")
+            else
+              for (connector ← connectors if !connector.startsWith("_"))
+                inc(userCount, connector)
+        }
+      sender ! adjust(userCount)
   }
 
 }
@@ -144,8 +160,12 @@ object CounterActor {
   case object GetUserCountByKind
   case class GetUserCountByLocale(langOnly: Boolean)
   case object GetUserCountByGCMembership
+  case object GetUserCountByConnector
   case object Reset
   private case class WithGeoIP(user: User, generation: Int)
+
+  def inc[K](counter: MutMap[K, Long], key: K): Unit =
+    counter += key -> (counter.getOrElse(key, 0L) + 1L)
 
   // Updates from users are done every 30 minutes
   private val updatePeriodMs = 30 * 60 * 1000

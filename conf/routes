@@ -34,6 +34,13 @@ GET /api/count/by-lang          controllers.API.countByLang()
 # Get counter by GC membership
 GET /api/count/by-gc-membership  controllers.API.countByGCMembership()
 
+# Get counter by active connector
+# The data is returned as a map with some special keys:
+#   - _noinfo contains the number of clients with no connector information (older ones)
+#   - _withinfo contains the number of clients with connector information
+#   - _noconnectors contains the number of clients with empty (but present) connector information
+GET /api/count/by-connector     controllers.API.countByConnector()
+
 # Get recent locations
 GET /api/recent-locations        controllers.API.recentLocations(limit: Int ?= Int.MaxValue, timestamp: Long ?= -1)
 
