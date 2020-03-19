@@ -5,7 +5,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 // SbtScalariform.scalariformSettings(true)
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.10",
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignArguments, true)
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -22,6 +22,7 @@ lazy val cgeoStatus = (project in file(".")).enablePlugins(PlayScala).settings(c
     "com.typesafe.slick" %% "slick" % "3.2.3",
     "org.postgresql" % "postgresql" % "42.2.5",
     "com.google.api-client" % "google-api-client" % "1.25.0",
+    "org.apache.commons" % "commons-compress" % "1.20",
     "org.scalatestplus.play" %% "scalatestplus-play" % "3.1.2" % "test"),
   routesGenerator := InjectedRoutesGenerator
 ).dependsOn(geoip2)

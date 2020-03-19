@@ -1,6 +1,6 @@
 package controllers.geoip
 
-import java.io.{File, FileInputStream, FileOutputStream}
+import java.io.{File, FileInputStream, FileOutputStream, OutputStream}
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -13,6 +13,7 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.sanoma.cda.geoip.MaxMindIpGeo
 import models.User
+import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveInputStream}
 import play.api.libs.ws.WSClient
 import play.api.{Configuration, Logger}
 
@@ -75,9 +76,11 @@ class GeoIPActor @Inject() (
             try {
               val compressedInput = new FileInputStream(compressedFile)
               val uncompressedInput = new GZIPInputStream(compressedInput)
+              val tarInput = new TarArchiveInputStream(uncompressedInput)
               val output = new FileOutputStream(file)
-              IOUtils.copy(uncompressedInput, output)
+              extractGeoIPData(tarInput, output)
               output.close()
+              tarInput.close()
               uncompressedInput.close()
               compressedInput.close()
               compressedFile.delete()
@@ -116,4 +119,16 @@ object GeoIPActor {
         Logger.warn(s"cannot remove obsolete file $file", t)
     }
   }
+
+  private def extractGeoIPData(tarInput: TarArchiveInputStream, output: OutputStream) {
+    var tarEntry: TarArchiveEntry = null
+    while ({ tarEntry = tarInput.getNextTarEntry(); tarEntry != null }) {
+      if (tarEntry.getName.endsWith("GeoLite2-City.mmdb")) {
+        IOUtils.copy(tarInput, output)
+        return
+      }
+    }
+    throw new RuntimeException("unable to find GeoIP location data in downloaded archive")
+  }
+
 }
