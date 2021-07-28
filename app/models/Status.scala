@@ -42,7 +42,7 @@ class Status @Inject() (database: Database) {
 
   private val newNightly = Message(
     "New nightly build available.\nClick to install.",
-    Some("status_new_nightly"), Some("attribute_climbing"), Some("http://download.cgeo.org/cgeo-nightly.apk"),
+    Some("status_new_nightly"), Some("attribute_climbing"), Some("https://download.cgeo.org/cgeo-nightly.apk"),
     None)
 
   /**
