@@ -5,3 +5,12 @@ target
 tmp
 .history
 *~
+.metals
+.bloop
+.bsp
+.idea
+.vscode
+.envrc
+.direnv
+project/.bloop
+project/metals.sbt
