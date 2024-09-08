@@ -5,7 +5,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 // SbtScalariform.scalariformSettings(true)
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.10",
+  scalaVersion := "2.12.20",
   ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignArguments, true)
     .setPreference(AlignSingleLineCaseStatements, true)
