@@ -135,18 +135,22 @@ class CounterActor @Inject() (config: Configuration, status: Status, @Named("geo
       sender ! GCMembership.kinds.map(k ⇒ k.name → adjusted(k)).toMap
 
     case GetUserCountByConnector ⇒
+      var noInfo = 0L
+      var withInfo = 0L
       var userCount = MutMap[String, Long]()
       for (user ← users)
         user.connectorInfo match {
-          case User.NoConnectorInfo ⇒ inc(userCount, "_noinfo")
+          case User.NoConnectorInfo ⇒ noInfo += 1L
           case User.Connectors(connectors) ⇒
-            inc(userCount, "_withinfo")
+            withInfo += 1L
             if (connectors.isEmpty)
               inc(userCount, "_noconnectors")
             else
               for (connector ← connectors if !connector.startsWith("_"))
                 inc(userCount, connector)
         }
+      userCount += "_noinfo" → noInfo
+      userCount += "_withinfo" → withInfo
       sender ! adjust(userCount)
   }
 
